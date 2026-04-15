@@ -46,7 +46,7 @@ function InstitutionalSection() {
     <section className="bg-white py-16">
       <div className="container mx-auto px-4">
         <div className="mb-10 text-center">
-          <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-brand">Por que a A2Tech</p>
+          <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-brand">Por que a A2 Brasil Supplies</p>
           <h2 className="text-neutral-900">Qualidade e confiança industrial</h2>
         </div>
 
