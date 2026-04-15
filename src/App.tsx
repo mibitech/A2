@@ -8,6 +8,7 @@ import ResetPasswordPage from './features/auth/views/ResetPasswordPage'
 import ProductsPage from './features/products/views/ProductsPage'
 import ProductDetailPage from './features/products/views/ProductDetailPage'
 import CartPage from './features/cart/views/CartPage'
+import MinhaContaPage from './features/conta/views/MinhaContaPage'
 import { ProtectedRoute } from './features/auth/components/ProtectedRoute'
 import AdminLayout from './features/admin/views/AdminLayout'
 import AdminDashboard from './features/admin/views/AdminDashboard'
@@ -34,6 +35,16 @@ function App() {
 
       {/* Cart & Checkout Routes */}
       <Route path="/carrinho" element={<CartPage />} />
+
+      {/* Minha Conta — qualquer usuário logado */}
+      <Route
+        path="/conta"
+        element={
+          <ProtectedRoute>
+            <MinhaContaPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Admin Routes — apenas admin e funcionario */}
       <Route
