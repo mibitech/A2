@@ -59,7 +59,8 @@ function ForgotPasswordPage() {
         {/* Logo */}
         <div className="mb-8 text-center">
           <Link to="/" className="inline-block">
-            <h1 className="text-3xl font-bold text-brand">A2TECH</h1>
+            <h1 className="text-3xl font-bold text-brand leading-none">A2</h1>
+            <p className="text-sm text-neutral-500 mt-1">Brasil Supplies LTDA</p>
           </Link>
           <p className="mt-2 text-neutral-600">Recuperar senha</p>
         </div>

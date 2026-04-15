@@ -48,7 +48,10 @@ function Header({ cartItemsCount = 0 }: HeaderProps) {
           <div className="flex items-center justify-between py-4">
             {/* Logo */}
             <Link to="/" className="flex items-center">
-              <h1 className="text-2xl font-bold text-white">A2TECH</h1>
+              <div>
+                <h1 className="text-2xl font-bold text-white leading-none">A2</h1>
+                <p className="text-xs text-white/70 leading-none mt-0.5">Brasil Supplies LTDA</p>
+              </div>
             </Link>
 
             {/* Search Bar */}
@@ -302,7 +305,10 @@ function Header({ cartItemsCount = 0 }: HeaderProps) {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link to="/" className="flex items-center">
-              <h1 className="text-xl font-bold text-white">A2TECH</h1>
+              <div>
+                <h1 className="text-xl font-bold text-white leading-none">A2</h1>
+                <p className="text-xs text-white/70 leading-none mt-0.5">Brasil Supplies LTDA</p>
+              </div>
             </Link>
 
             {/* Conta Icon */}

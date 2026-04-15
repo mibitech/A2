@@ -76,8 +76,9 @@ export default function AdminLayout() {
       <aside className="w-60 bg-brand-900 text-white flex flex-col shrink-0">
         {/* Logo */}
         <div className="px-5 py-4 border-b border-brand-800">
-          <span className="text-base font-bold text-white">A2Tech</span>
-          <span className="text-xs text-brand-300 block mt-0.5">Painel Admin</span>
+          <span className="text-base font-bold text-white">A2</span>
+          <span className="text-xs text-brand-300 block leading-none">Brasil Supplies LTDA</span>
+          <span className="text-xs text-brand-400 block mt-1">Painel Admin</span>
         </div>
 
         {/* Voltar ao site */}
