@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Tema: valores padrão da cor brand (RGB separado por espaço)
+   O DS page atualiza estas variáveis em tempo real via JavaScript.
+   Para mudar a cor permanentemente, edite os valores abaixo e o tailwind.config.cjs. */
+:root {
+  --color-brand-50:  245 242 249;
+  --color-brand-100: 235 228 243;
+  --color-brand-200: 214 201 231;
+  --color-brand-300: 194 174 219;
+  --color-brand-400: 142 107 184;
+  --color-brand:     107 63 160;   /* 500 / DEFAULT */
+  --color-brand-600: 90 53 134;
+  --color-brand-700: 74 44 109;
+  --color-brand-800: 58 34 84;
+  --color-brand-900: 42 25 59;
+  --color-brand-950: 26 15 34;
+}
+
+@layer base {
+  * {
+    @apply border-neutral-200;
+  }
+  
+  body {
+    @apply bg-neutral-50 text-neutral-900 antialiased;
+  }
+
+  h1 {
+    @apply text-h1;
+  }
+
+  h2 {
+    @apply text-h2;
+  }
+
+  h3 {
+    @apply text-h3;
+  }
+
+  h4 {
+    @apply text-h4;
+  }
+
+  h5 {
+    @apply text-h5;
+  }
+
+  h6 {
+    @apply text-h6;
+  }
+}
+
+@layer components {
+  /* Custom scrollbar */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-neutral-100;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-neutral-300 rounded-full;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-neutral-400;
+  }
+}
