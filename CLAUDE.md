@@ -104,6 +104,7 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - Carrinho de compras (Context API, localStorage)
 - Tabelas de pedidos criadas no Supabase
 - Header com dropdown de conta (primeiro nome, Minha Conta, Painel Admin, Sair)
+- Rebranding completo: A2TECH → **A2** + **Brasil Supplies LTDA** (header, admin, auth, landing, title)
 - ❌ **Checkout com Stripe (US-13) — NÃO IMPLEMENTADO**
 - ❌ **E-mail de confirmação com Brevo (US-14) — NÃO IMPLEMENTADO**
 
@@ -113,27 +114,42 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - `is_admin()` e `is_staff()` com SECURITY DEFINER (anti-recursão)
 - RLS completo: enderecos, usuarios, fornecedores, produtos, pedidos, itens_pedido
 - Rotas admin protegidas: `/admin`, `/admin/estoque`, `/admin/pedidos`, `/admin/clientes`, `/admin/financeiro`
-- Pages placeholder para todas as rotas admin
 
-#### Épico 8 — Gestão de Estoque ⚠️ (código pronto, bug de carregamento pendente)
-- Tabela `movimentacoes_estoque` criada (migration)
-- Bucket Storage `produtos` criado (migration)
-- CRUD completo de produtos no painel admin
-- Upload de imagens para Supabase Storage
-- Histórico de movimentações com modal
+#### Épico 8 — Gestão de Estoque ✅
+- Tabela `movimentacoes_estoque` + bucket Storage `produtos` (migrations idempotentes)
+- CRUD completo de produtos no painel admin, upload de imagens, histórico de movimentações
 - Ajuste de estoque (entrada / saída / ajuste manual)
-- **BUG**: `/admin/estoque` trava ao carregar — provável conflito de RLS policy
-- **FIX pendente**: reaplicar migrations 20260415130000 e 20260415140000 (já idempotentes)
+- Bug de carregamento resolvido pelo usuário (migrations reaplicadas)
+
+#### Épico 9 — CRM ✅ (US-20 concluído)
+- `AdminClientesPage`: tabela com busca, filtro por role, stats totais
+- `PerfilModal`: abas Info (role management) + Pedidos (lazy-load)
+- US-21 (campanhas por Brevo) — bloqueado aguardando chave Brevo
+
+#### Admin Pedidos ✅ (implementado fora do Épico 10)
+- `AdminPedidosPage`: tabela + cards de status + busca; DetalheModal com Itens, Entrega, Observações
+- Fluxo de avanço de status manual (sem Stripe)
+- Seed de 10 pedidos fake em `supabase/seeds/seed_pedidos_fake.sql` (pendente aplicação)
+
+#### Dashboard Admin ✅ (dados reais)
+- 4 cards ao vivo, últimos 5 pedidos, estoque baixo, módulos com status real
+
+#### Minha Conta (/conta) ✅
+- Página pública para qualquer usuário logado
+- Abas: Dados pessoais (editar), Meus pedidos (histórico), Segurança (alterar senha)
 
 ### ❌ Pendente (travado por dependência externa)
 - **US-13** — Checkout Stripe (sem chaves configuradas)
 - **US-14** — E-mail Brevo (sem chaves configuradas)
-- **US-19** — Alertas estoque mínimo (depende de n8n + WhatsApp)
+- **US-19** — Alertas estoque mínimo (n8n + WhatsApp)
+- **US-21** — Campanhas CRM (Brevo)
+- **Épico 10 completo** — Financeiro Stripe (conciliação automática)
+- **Épico 11** — Automações n8n
 
-### 🚀 Próximos Épicos
-- **Épico 9** — CRM: listagem de clientes, histórico de pedidos (livre para iniciar)
-- **Épico 10** — Financeiro (depende de Stripe)
-- **Épico 11** — Automações n8n (depende de Stripe + Brevo)
+### 🚀 Próximas Ações (sem bloqueio externo)
+1. **Aplicar seed**: `supabase/seeds/seed_pedidos_fake.sql` no SQL Editor do Supabase
+2. **US-20 complemento**: Tags de segmentação manual de clientes no CRM
+3. **US-22 parcial**: Fluxo de caixa manual (entradas/saídas sem Stripe)
 
 ---
 
@@ -207,25 +223,25 @@ Ferramentas para integração com serviços externos. Claude pode usar MCPs para
 
 ## 🎯 Próximas Ações (Ordenadas)
 
-### 1. IMEDIATO — Resolver bug Gestão de Estoque
-- Reaplicar no Supabase SQL Editor:
-  1. `supabase/migrations/20260415130000_epic7_rls_completo.sql`
-  2. `supabase/migrations/20260415140000_movimentacoes_estoque.sql`
-- Testar `/admin/estoque` — deve carregar os 4 produtos FitaCabo
-- Se ainda travar: verificar no Supabase → Table Editor → produtos → Policies
+### 1. IMEDIATO — Aplicar seed de pedidos fake
+- Abrir `supabase/seeds/seed_pedidos_fake.sql` no Supabase SQL Editor
+- Executar para criar 5 clientes + 10 pedidos de teste
+- Testar `/admin/pedidos` e `/conta` com os dados
 
-### 2. Épico 9 — CRM (livre para iniciar)
-- **US-20**: Listagem de clientes em `/admin/clientes`
-  - [ ] Buscar todos os usuários da tabela `usuarios`
-  - [ ] Exibir nome, e-mail, role, data de cadastro
-  - [ ] Link para histórico de pedidos por cliente
+### 2. US-20 complemento — Tags de segmentação de clientes
+- Adicionar coluna `tags` (array text) na tabela `usuarios`
+- UI no PerfilModal do AdminClientesPage para adicionar/remover tags
+- Útil para US-21 (campanhas segmentadas por Brevo)
 
-### 3. Fase 1 Final — Quando tiver as chaves
+### 3. US-22 parcial — Fluxo de caixa manual
+- Criar tabela `lancamentos_caixa` (migration)
+- CRUD de entradas e saídas manuais no AdminFinanceiroPage
+- Totalizador de saldo sem depender do Stripe
+
+### 4. Quando tiver as chaves Stripe/Brevo
 - **US-13** [Stripe]: Edge Function + Frontend Checkout + Webhook
 - **US-14** [Brevo]: n8n workflow + template e-mail
-
-### 4. Épico 10 + 11 — Após Stripe configurado
-- Financeiro, automações n8n (abandono de carrinho, NPS)
+- **Épico 10 completo** + **Épico 11** (automações n8n)
 
 ---
 
