@@ -140,7 +140,7 @@ export default function AdminDashboard() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-neutral-900">Olá, {firstName}</h1>
         <p className="mt-0.5 text-sm text-neutral-500">
-          Bem-vindo ao painel administrativo da A2Tech.
+          Bem-vindo ao painel administrativo da A2 Brasil Supplies.
         </p>
       </div>
 

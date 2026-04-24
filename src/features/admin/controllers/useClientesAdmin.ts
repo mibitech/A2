@@ -35,6 +35,13 @@ export function useClientesAdmin() {
     return { success: true }
   }, [])
 
+  const updateTags = useCallback(async (id: string, tags: string[]) => {
+    const { error: err } = await service.updateTagsCliente(id, tags)
+    if (err) return { success: false, error: err }
+    setClientes(prev => prev.map(c => c.id === id ? { ...c, tags } : c))
+    return { success: true }
+  }, [])
+
   return {
     clientes,
     isLoading,
@@ -42,5 +49,6 @@ export function useClientesAdmin() {
     reload: load,
     getPedidos,
     updateRole,
+    updateTags,
   }
 }

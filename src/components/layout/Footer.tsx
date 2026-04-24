@@ -10,7 +10,7 @@ const productLinks = [
 ]
 
 const institutionalLinks = [
-  { to: '/sobre', label: 'Sobre a A2Tech' },
+  { to: '/sobre', label: 'Sobre a A2 Brasil Supplies' },
   { to: '/certificacoes', label: 'Certificações' },
   { to: '/qualidade', label: 'Política de Qualidade' },
   { to: '/blog', label: 'Blog' },
@@ -129,7 +129,7 @@ function Footer() {
               </div>
 
               <p className="mt-6 text-xs text-neutral-500">
-                Em breve: App A2Tech nas lojas
+                Em breve: App A2 Brasil Supplies nas lojas
               </p>
             </div>
           </div>
@@ -140,7 +140,7 @@ function Footer() {
       <div className="py-5">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-between gap-4 text-xs text-neutral-500 md:flex-row">
-            <p>© 2026 A2Tech · Todos os direitos reservados</p>
+            <p>© 2026 A2 Brasil Supplies · Todos os direitos reservados</p>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-1.5">
                 <svg className="h-4 w-4 text-brand-400" fill="currentColor" viewBox="0 0 20 20">

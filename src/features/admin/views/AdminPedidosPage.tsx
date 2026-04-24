@@ -16,8 +16,17 @@ const STATUS_COLOR: Record<StatusPedido, string> = {
   pago: 'bg-green-100 text-green-700',
   processando: 'bg-blue-100 text-blue-700',
   enviado: 'bg-indigo-100 text-indigo-700',
-  entregue: 'bg-green-100 text-green-800',
+  entregue: 'bg-emerald-100 text-emerald-800',
   cancelado: 'bg-red-100 text-red-700',
+}
+
+const STATUS_CARD: Record<StatusPedido, { card: string; count: string; label: string }> = {
+  pendente:    { card: 'border-yellow-200 bg-yellow-50',  count: 'text-yellow-700',  label: 'text-yellow-600' },
+  pago:        { card: 'border-green-200 bg-green-50',    count: 'text-green-700',   label: 'text-green-600' },
+  processando: { card: 'border-blue-200 bg-blue-50',      count: 'text-blue-700',    label: 'text-blue-600' },
+  enviado:     { card: 'border-indigo-200 bg-indigo-50',  count: 'text-indigo-700',  label: 'text-indigo-600' },
+  entregue:    { card: 'border-emerald-200 bg-emerald-50',count: 'text-emerald-700', label: 'text-emerald-600' },
+  cancelado:   { card: 'border-red-200 bg-red-50',        count: 'text-red-700',     label: 'text-red-600' },
 }
 
 // Fluxo lógico de transição de status
@@ -331,12 +340,16 @@ export default function AdminPedidosPage() {
           <button
             key={s}
             onClick={() => setFiltroStatus(filtroStatus === s ? 'todos' : s)}
-            className={`rounded-xl border p-3 text-left transition-colors ${filtroStatus === s ? 'border-brand bg-brand/5' : 'border-neutral-200 bg-white hover:bg-neutral-50'}`}
+            className={`rounded-xl border p-3 text-left transition-all ${
+              filtroStatus === s
+                ? `${STATUS_CARD[s].card} ring-2 ring-offset-1 ring-current ${STATUS_CARD[s].count}`
+                : `${STATUS_CARD[s].card} opacity-70 hover:opacity-100`
+            }`}
           >
-            <p className={`text-lg font-bold ${filtroStatus === s ? 'text-brand' : 'text-neutral-800'}`}>
+            <p className={`text-lg font-bold ${STATUS_CARD[s].count}`}>
               {countPorStatus(s)}
             </p>
-            <p className="text-xs text-neutral-400 mt-0.5">{STATUS_LABEL[s]}</p>
+            <p className={`text-xs mt-0.5 font-medium ${STATUS_CARD[s].label}`}>{STATUS_LABEL[s]}</p>
           </button>
         ))}
       </div>

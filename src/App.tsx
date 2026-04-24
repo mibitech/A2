@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import DesignSystemPage from './features/design-system/views/DesignSystemPage'
 import LandingPage from './features/landing/views/LandingPage'
 import LoginPage from './features/auth/views/LoginPage'
@@ -16,12 +16,22 @@ import AdminEstoquePage from './features/admin/views/AdminEstoquePage'
 import AdminPedidosPage from './features/admin/views/AdminPedidosPage'
 import AdminClientesPage from './features/admin/views/AdminClientesPage'
 import AdminFinanceiroPage from './features/admin/views/AdminFinanceiroPage'
+import AdminSitePage from './features/admin/views/AdminSitePage'
+import SobreNosPage from './features/sobre/views/SobreNosPage'
+import ContatosPage from './features/contatos/views/ContatosPage'
+import WhatsAppBubble from './components/layout/WhatsAppBubble'
 
 function App() {
   return (
+    <>
     <Routes>
       {/* Landing Page */}
       <Route path="/" element={<LandingPage />} />
+
+      {/* Páginas institucionais */}
+      <Route path="/sobre" element={<SobreNosPage />} />
+      <Route path="/contatos" element={<ContatosPage />} />
+      <Route path="/contato" element={<Navigate to="/contatos" replace />} />
 
       {/* Auth Routes */}
       <Route path="/auth/login" element={<LoginPage />} />
@@ -60,11 +70,15 @@ function App() {
         <Route path="pedidos" element={<AdminPedidosPage />} />
         <Route path="clientes" element={<AdminClientesPage />} />
         <Route path="financeiro" element={<AdminFinanceiroPage />} />
+        <Route path="site" element={<AdminSitePage />} />
+        <Route path="design-system" element={<DesignSystemPage />} />
       </Route>
 
       {/* Design System (apenas dev) */}
       <Route path="/design-system" element={<DesignSystemPage />} />
     </Routes>
+    <WhatsAppBubble />
+    </>
   )
 }
 

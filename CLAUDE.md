@@ -95,7 +95,7 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 
 ---
 
-## 📌 Status do Projeto Hoje (2026-04-15)
+## 📌 Status do Projeto Hoje (2026-04-23)
 
 ### ✅ Concluído (Fase 1 — base)
 - Hero section + proposta de valor
@@ -104,7 +104,7 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - Carrinho de compras (Context API, localStorage)
 - Tabelas de pedidos criadas no Supabase
 - Header com dropdown de conta (primeiro nome, Minha Conta, Painel Admin, Sair)
-- Rebranding completo: A2TECH → **A2** + **Brasil Supplies LTDA** (header, admin, auth, landing, title)
+- Rebranding completo: A2TECH → **A2** + **Brasil Supplies LTDA** (header, admin, auth, landing, footer, title)
 - ❌ **Checkout com Stripe (US-13) — NÃO IMPLEMENTADO**
 - ❌ **E-mail de confirmação com Brevo (US-14) — NÃO IMPLEMENTADO**
 
@@ -112,31 +112,63 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 
 #### Épico 7 — Controle de Acesso ✅
 - `is_admin()` e `is_staff()` com SECURITY DEFINER (anti-recursão)
-- RLS completo: enderecos, usuarios, fornecedores, produtos, pedidos, itens_pedido
-- Rotas admin protegidas: `/admin`, `/admin/estoque`, `/admin/pedidos`, `/admin/clientes`, `/admin/financeiro`
+- RLS consolidado em migration `20260423000003` — elimina timeout por recursão nos pedidos
+- Rotas admin protegidas: `/admin`, `/admin/estoque`, `/admin/pedidos`, `/admin/clientes`, `/admin/financeiro`, `/admin/site`
 
 #### Épico 8 — Gestão de Estoque ✅
-- Tabela `movimentacoes_estoque` + bucket Storage `produtos` (migrations idempotentes)
-- CRUD completo de produtos no painel admin, upload de imagens, histórico de movimentações
-- Ajuste de estoque (entrada / saída / ajuste manual)
-- Bug de carregamento resolvido pelo usuário (migrations reaplicadas)
+- Tabela `movimentacoes_estoque` + bucket Storage `produtos`
+- CRUD completo de produtos, upload de imagens, histórico de movimentações
 
-#### Épico 9 — CRM ✅ (US-20 concluído)
+#### Épico 9 — CRM ✅ (US-20 + tags concluídos)
 - `AdminClientesPage`: tabela com busca, filtro por role, stats totais
-- `PerfilModal`: abas Info (role management) + Pedidos (lazy-load)
+- `PerfilModal`: abas Info (role management + tags de segmentação) + Pedidos (lazy-load)
+- Tags: chips visuais, input com Enter, sugestões, salvar via `updateTagsCliente`
 - US-21 (campanhas por Brevo) — bloqueado aguardando chave Brevo
 
-#### Admin Pedidos ✅ (implementado fora do Épico 10)
+#### Admin Pedidos ✅
 - `AdminPedidosPage`: tabela + cards de status + busca; DetalheModal com Itens, Entrega, Observações
 - Fluxo de avanço de status manual (sem Stripe)
-- Seed de 10 pedidos fake em `supabase/seeds/seed_pedidos_fake.sql` (pendente aplicação)
+- Seed de 10 pedidos fake em `supabase/seeds/seed_pedidos_fake.sql` (pendente aplicação pelo usuário)
 
 #### Dashboard Admin ✅ (dados reais)
 - 4 cards ao vivo, últimos 5 pedidos, estoque baixo, módulos com status real
 
 #### Minha Conta (/conta) ✅
-- Página pública para qualquer usuário logado
 - Abas: Dados pessoais (editar), Meus pedidos (histórico), Segurança (alterar senha)
+
+#### US-22 parcial — Fluxo de Caixa Manual ✅
+- Tabela `lancamentos_caixa` + `categorias_caixa` com seed padrão
+- `AdminFinanceiroPage`: abas Lançamentos + Categorias; modal com seleção de categoria por tipo
+
+#### Conteúdo Dinâmico do Site ✅
+- Bucket `site` + tabelas `hero_slides`, `conteudo_site`, `sobre_galeria`
+- `AdminSitePage`: 5 abas — Carrossel (CRUD de slides + upload), Sobre Nós (textos + galeria), Contatos, Institucional, WhatsApp
+- Carrossel da home (`HeroSection`) carrega slides do banco com fallback
+- Páginas públicas `/sobre` e `/contatos` com conteúdo parcialmente dinâmico
+- Redirect `/contato` → `/contatos`
+
+#### WhatsApp Bubble ✅
+- `WhatsAppBubble.tsx` — botão flutuante global, toggle liga/desliga pelo admin
+- Configuração em `/admin/site` → aba WhatsApp (número, mensagem, label, toggle)
+
+### ❌ Pendente (travado por dependência externa)
+- **US-13** — Checkout Stripe (sem chaves configuradas)
+- **US-14** — E-mail Brevo (sem chaves configuradas)
+- **US-19** — Alertas estoque mínimo (n8n + WhatsApp)
+- **US-21** — Campanhas CRM (Brevo)
+- **Épico 10 completo** — Financeiro Stripe (conciliação automática)
+- **Épico 11** — Automações n8n
+
+#### Carrinho — Frete Mockado ✅
+- `CartPage.tsx` — componente `CalcFrete` com input de CEP, 10 faixas regionais (PAC + SEDEX), frete grátis ≥ R$ 500
+- Estrutura pronta para substituir por API real (Melhor Envio / Correios) quando disponível
+- Botão "Finalizar Compra" bloqueado até frete ser selecionado
+
+#### Cards de pedido com cores por status ✅
+- `AdminPedidosPage.tsx` — `STATUS_CARD` com borda + fundo + texto coloridos por status (mesmo padrão do financeiro)
+
+#### Rebranding completo ✅
+- "A2 Brasil Supplies" em todos os pontos: Header, Admin, Auth, Landing, Footer, Design System, Dashboard
 
 ### ❌ Pendente (travado por dependência externa)
 - **US-13** — Checkout Stripe (sem chaves configuradas)
@@ -147,9 +179,12 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - **Épico 11** — Automações n8n
 
 ### 🚀 Próximas Ações (sem bloqueio externo)
-1. **Aplicar seed**: `supabase/seeds/seed_pedidos_fake.sql` no SQL Editor do Supabase
-2. **US-20 complemento**: Tags de segmentação manual de clientes no CRM
-3. **US-22 parcial**: Fluxo de caixa manual (entradas/saídas sem Stripe)
+1. **Aplicar migration** `20260423000005_whatsapp_bubble.sql` no Supabase SQL Editor
+2. **Configurar WhatsApp**: `/admin/site` → aba WhatsApp → número real
+3. **Deploy**: `pnpm build && pm2 restart a2tech` no servidor `54.232.189.113`
+4. **Aplicar seed de pedidos fake**: `supabase/seeds/seed_pedidos_fake.sql`
+5. **Frete real**: integrar API Melhor Envio ou Correios quando disponível
+6. Quando chaves disponíveis: US-13 (Stripe) + US-14 (Brevo) + Épico 10
 
 ---
 

@@ -8,6 +8,7 @@ export interface ClienteAdmin {
   cpfCnpj: string | null
   tipoPessoa: 'fisica' | 'juridica'
   role: 'cliente' | 'funcionario' | 'admin'
+  tags: string[]
   createdAt: string
   totalPedidos: number
   totalGasto: number
@@ -22,7 +23,7 @@ export async function getAllClientes(): Promise<{ clientes: ClienteAdmin[]; erro
         .select('*')
         .order('created_at', { ascending: false }),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
-    ]) as { data: { id: string; email: string; nome_completo: string | null; telefone: string | null; cpf_cnpj: string | null; tipo_pessoa: 'fisica' | 'juridica'; role: 'cliente' | 'funcionario' | 'admin'; created_at: string }[] | null; error: { message: string } | null }
+    ]) as { data: { id: string; email: string; nome_completo: string | null; telefone: string | null; cpf_cnpj: string | null; tipo_pessoa: 'fisica' | 'juridica'; role: 'cliente' | 'funcionario' | 'admin'; tags: string[] | null; created_at: string }[] | null; error: { message: string } | null }
 
     if (error) return { clientes: [], error: error.message }
 
@@ -34,6 +35,7 @@ export async function getAllClientes(): Promise<{ clientes: ClienteAdmin[]; erro
       cpfCnpj: u.cpf_cnpj,
       tipoPessoa: u.tipo_pessoa,
       role: u.role,
+      tags: u.tags ?? [],
       createdAt: u.created_at,
       totalPedidos: 0,
       totalGasto: 0,
@@ -81,6 +83,23 @@ export async function getPedidosCliente(
     return { pedidos, error: null }
   } catch {
     return { pedidos: [], error: 'Erro ao buscar pedidos' }
+  }
+}
+
+// ===== ATUALIZAR TAGS DO USUÁRIO =====
+export async function updateTagsCliente(
+  id: string,
+  tags: string[]
+): Promise<{ error: string | null }> {
+  try {
+    const { error } = await (supabase.from('usuarios') as any)
+      .update({ tags })
+      .eq('id', id)
+
+    if (error) return { error: error.message }
+    return { error: null }
+  } catch {
+    return { error: 'Erro ao atualizar tags' }
   }
 }
 

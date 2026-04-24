@@ -87,7 +87,7 @@ function DesignSystemPage() {
               <div className="h-8 w-1.5 rounded-full" style={{ backgroundColor: brandColor }} />
               <div>
                 <h1 className="text-xl font-bold text-neutral-900">Design System</h1>
-                <p className="text-xs text-neutral-400">A2Tech · React + TypeScript + Tailwind</p>
+                <p className="text-xs text-neutral-400">A2 Brasil Supplies · React + TypeScript + Tailwind</p>
               </div>
             </div>
             <Badge variant="neutral">v1.0.0</Badge>

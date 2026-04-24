@@ -40,9 +40,12 @@ interface PerfilModalProps {
   onClose: () => void
   getPedidos: (id: string) => Promise<PedidoResumo[]>
   onUpdateRole: (id: string, role: 'cliente' | 'funcionario' | 'admin') => Promise<{ success: boolean; error?: string }>
+  onUpdateTags: (id: string, tags: string[]) => Promise<{ success: boolean; error?: string }>
 }
 
-function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole }: PerfilModalProps) {
+const TAGS_SUGERIDAS = ['vip', 'atacado', 'recorrente', 'inativo', 'prospect', 'prioritário']
+
+function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags }: PerfilModalProps) {
   const [pedidos, setPedidos] = useState<PedidoResumo[] | null>(null)
   const [loadingPedidos, setLoadingPedidos] = useState(false)
   const [abaAtiva, setAbaAtiva] = useState<'info' | 'pedidos'>('info')
@@ -50,6 +53,9 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole }: PerfilModal
   const [novoRole, setNovoRole] = useState(cliente.role)
   const [salvandoRole, setSalvandoRole] = useState(false)
   const [feedback, setFeedback] = useState<string | null>(null)
+  const [tags, setTags] = useState<string[]>(cliente.tags ?? [])
+  const [tagInput, setTagInput] = useState('')
+  const [salvandoTags, setSalvandoTags] = useState(false)
 
   async function carregarPedidos() {
     if (pedidos !== null) return
@@ -75,6 +81,25 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole }: PerfilModal
     } else {
       setFeedback('Erro: ' + result.error)
     }
+  }
+
+  function adicionarTag(tag: string) {
+    const t = tag.trim().toLowerCase()
+    if (!t || tags.includes(t)) return
+    setTags(prev => [...prev, t])
+    setTagInput('')
+  }
+
+  function removerTag(tag: string) {
+    setTags(prev => prev.filter(t => t !== tag))
+  }
+
+  async function handleSalvarTags() {
+    setSalvandoTags(true)
+    const result = await onUpdateTags(cliente.id, tags)
+    setSalvandoTags(false)
+    setFeedback(result.success ? 'Tags salvas!' : 'Erro: ' + result.error)
+    setTimeout(() => setFeedback(null), 3000)
   }
 
   const totalGasto = pedidos?.reduce((acc, p) => acc + p.total, 0) ?? 0
@@ -184,6 +209,70 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole }: PerfilModal
                   </div>
                 </div>
               </div>
+
+              {/* Tags de segmentação */}
+              <div className="rounded-lg border border-neutral-200 p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-neutral-400">Tags de Segmentação</p>
+                  <button
+                    onClick={handleSalvarTags}
+                    disabled={salvandoTags}
+                    className="text-xs text-brand hover:underline disabled:opacity-50"
+                  >
+                    {salvandoTags ? 'Salvando...' : 'Salvar tags'}
+                  </button>
+                </div>
+
+                {/* Tags ativas */}
+                <div className="flex flex-wrap gap-1.5 mb-2 min-h-[24px]">
+                  {tags.length === 0 && (
+                    <span className="text-xs text-neutral-300">Nenhuma tag adicionada</span>
+                  )}
+                  {tags.map(tag => (
+                    <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand">
+                      {tag}
+                      <button
+                        onClick={() => removerTag(tag)}
+                        className="ml-0.5 text-brand hover:text-red-500 leading-none"
+                        aria-label={`Remover ${tag}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+
+                {/* Input para nova tag */}
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={e => setTagInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionarTag(tagInput) } }}
+                    placeholder="Nova tag..."
+                    className="flex-1 rounded border border-neutral-300 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-brand"
+                  />
+                  <button
+                    onClick={() => adicionarTag(tagInput)}
+                    className="rounded bg-neutral-100 px-2 py-1 text-xs text-neutral-600 hover:bg-neutral-200"
+                  >
+                    +
+                  </button>
+                </div>
+
+                {/* Sugestões */}
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {TAGS_SUGERIDAS.filter(t => !tags.includes(t)).map(t => (
+                    <button
+                      key={t}
+                      onClick={() => adicionarTag(t)}
+                      className="rounded-full border border-neutral-200 px-2 py-0.5 text-xs text-neutral-400 hover:border-brand hover:text-brand transition-colors"
+                    >
+                      + {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
@@ -245,7 +334,7 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole }: PerfilModal
 // PÁGINA PRINCIPAL
 // =====================================================
 export default function AdminClientesPage() {
-  const { clientes, isLoading, error, reload, getPedidos, updateRole } = useClientesAdmin()
+  const { clientes, isLoading, error, reload, getPedidos, updateRole, updateTags } = useClientesAdmin()
 
   const [busca, setBusca] = useState('')
   const [filtroRole, setFiltroRole] = useState<'todos' | 'cliente' | 'funcionario' | 'admin'>('todos')
@@ -378,6 +467,13 @@ export default function AdminClientesPage() {
             const result = await updateRole(id, role)
             if (result.success) {
               setClienteSelecionado(prev => prev ? { ...prev, role } : null)
+            }
+            return result
+          }}
+          onUpdateTags={async (id, tags) => {
+            const result = await updateTags(id, tags)
+            if (result.success) {
+              setClienteSelecionado(prev => prev ? { ...prev, tags } : null)
             }
             return result
           }}

@@ -66,7 +66,7 @@ function ProductCard({ product, listMode = false }: ProductCardProps) {
   }
 
   return (
-    <Card className="group flex h-full flex-col overflow-hidden transition-shadow hover:shadow-lg">
+    <Card padding="none" className="group flex h-full flex-col overflow-hidden transition-shadow hover:shadow-lg">
       {/* Imagem do Produto */}
       <Link to={`/produtos/${product.slug}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-neutral-100">
@@ -96,13 +96,11 @@ function ProductCard({ product, listMode = false }: ProductCardProps) {
       </Link>
 
       {/* Informações do Produto */}
-      <div className="flex flex-1 flex-col p-4">
-        {/* Categoria */}
+      <div className="flex flex-1 flex-col px-4 pt-3 pb-4">
         <p className="mb-1 text-xs uppercase tracking-wide text-neutral-500">
           {product.categoria}
         </p>
 
-        {/* Nome */}
         <Link
           to={`/produtos/${product.slug}`}
           className="mb-2 line-clamp-2 text-sm font-medium text-neutral-900 hover:text-brand"
@@ -110,15 +108,13 @@ function ProductCard({ product, listMode = false }: ProductCardProps) {
           {product.nome}
         </Link>
 
-        {/* Fornecedor */}
         {product.fornecedorNome && (
-          <p className="mb-3 text-xs text-neutral-500">
+          <p className="mb-2 text-xs text-neutral-500">
             por {product.fornecedorNome}
           </p>
         )}
 
-        {/* Preços */}
-        <div className="mb-3">
+        <div className="mb-2">
           {temDesconto && (
             <p className="text-xs text-neutral-500 line-through">
               {formatarPreco(product.preco)}
@@ -129,25 +125,24 @@ function ProductCard({ product, listMode = false }: ProductCardProps) {
           </p>
         </div>
 
-        {/* Estoque */}
         <p className="mb-3 text-xs text-neutral-600">
           {product.estoque > 0 ? (
             <span className="text-success">
-              {product.estoque} {product.estoque === 1 ? 'unidade' : 'unidades'} disponível
-              {product.estoque === 1 ? '' : 'is'}
+              {product.estoque} {product.estoque === 1 ? 'unidade' : 'unidades'} disponível{product.estoque === 1 ? '' : 'is'}
             </span>
           ) : (
             <span className="text-error">Fora de estoque</span>
           )}
         </p>
 
-        {/* Botão */}
-        <Link
-          to={`/produtos/${product.slug}`}
-          className="mt-auto inline-flex w-full items-center justify-center rounded-lg bg-brand px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-hover hover:shadow-md active:bg-brand-dark"
-        >
-          Ver Detalhes
-        </Link>
+        <div className="mt-auto flex justify-center">
+          <Link
+            to={`/produtos/${product.slug}`}
+            className="inline-flex items-center justify-center rounded-lg bg-brand px-5 py-1.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-brand-hover hover:shadow-md active:bg-brand-dark"
+          >
+            Ver Produto
+          </Link>
+        </div>
       </div>
     </Card>
   )
