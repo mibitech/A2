@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { usePedidosAdmin } from '../controllers/usePedidosAdmin'
 import type { PedidoAdmin, ItemPedidoAdmin, StatusPedido } from '../controllers/usePedidosAdmin'
+import Pagination from '@components/ui/Pagination'
 
 const STATUS_LABEL: Record<StatusPedido, string> = {
   pendente: 'Pendente',
@@ -290,6 +291,32 @@ function DetalheModal({ pedido, onClose, getItens, onUpdateStatus, onUpdateObser
 }
 
 // =====================================================
+// CABEÇALHO ORDENÁVEL
+// =====================================================
+type SortDir = 'asc' | 'desc'
+type SortKeyPedidos = 'data' | 'cliente' | 'status' | 'total'
+
+function ThSort({ label, col, current, dir, onSort, align = 'left' }: {
+  label: string; col: SortKeyPedidos; current: SortKeyPedidos
+  dir: SortDir; onSort: (c: SortKeyPedidos) => void; align?: 'left' | 'right' | 'center'
+}) {
+  const active = current === col
+  return (
+    <th
+      onClick={() => onSort(col)}
+      className={`cursor-pointer select-none px-4 py-3 text-${align} font-medium text-neutral-600 hover:text-neutral-900`}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        <span className={`text-xs ${active ? 'text-brand' : 'text-neutral-300'}`}>
+          {active ? (dir === 'asc' ? '↑' : '↓') : '↕'}
+        </span>
+      </span>
+    </th>
+  )
+}
+
+// =====================================================
 // PÁGINA PRINCIPAL
 // =====================================================
 export default function AdminPedidosPage() {
@@ -298,15 +325,36 @@ export default function AdminPedidosPage() {
   const [busca, setBusca] = useState('')
   const [filtroStatus, setFiltroStatus] = useState<StatusPedido | 'todos'>('todos')
   const [pedidoSelecionado, setPedidoSelecionado] = useState<PedidoAdmin | null>(null)
+  const [sortKey, setSortKey] = useState<SortKeyPedidos>('data')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
 
-  const pedidosFiltrados = pedidos.filter(p => {
-    const matchBusca = !busca ||
-      p.id.toLowerCase().includes(busca.toLowerCase()) ||
-      (p.usuario?.email ?? '').toLowerCase().includes(busca.toLowerCase()) ||
-      (p.usuario?.nomeCompleto ?? '').toLowerCase().includes(busca.toLowerCase())
-    const matchStatus = filtroStatus === 'todos' || p.status === filtroStatus
-    return matchBusca && matchStatus
-  })
+  function toggleSort(col: SortKeyPedidos) {
+    if (sortKey === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortKey(col); setSortDir('asc') }
+    setPage(1)
+  }
+
+  const pedidosFiltrados = pedidos
+    .filter(p => {
+      const matchBusca = !busca ||
+        p.id.toLowerCase().includes(busca.toLowerCase()) ||
+        (p.usuario?.email ?? '').toLowerCase().includes(busca.toLowerCase()) ||
+        (p.usuario?.nomeCompleto ?? '').toLowerCase().includes(busca.toLowerCase())
+      const matchStatus = filtroStatus === 'todos' || p.status === filtroStatus
+      return matchBusca && matchStatus
+    })
+    .sort((a, b) => {
+      const m = sortDir === 'asc' ? 1 : -1
+      if (sortKey === 'data') return m * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      if (sortKey === 'cliente') return m * ((a.usuario?.nomeCompleto ?? '').localeCompare(b.usuario?.nomeCompleto ?? '', 'pt-BR'))
+      if (sortKey === 'status') return m * a.status.localeCompare(b.status, 'pt-BR')
+      if (sortKey === 'total') return m * (a.total - b.total)
+      return 0
+    })
+
+  const pedidosPaginados = pedidosFiltrados.slice((page - 1) * pageSize, page * pageSize)
 
   const receitaTotal = pedidos
     .filter(p => p.status !== 'cancelado')
@@ -360,12 +408,12 @@ export default function AdminPedidosPage() {
           type="text"
           placeholder="Buscar por cliente ou nº do pedido..."
           value={busca}
-          onChange={e => setBusca(e.target.value)}
+          onChange={e => { setBusca(e.target.value); setPage(1) }}
           className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
         />
         <select
           value={filtroStatus}
-          onChange={e => setFiltroStatus(e.target.value as typeof filtroStatus)}
+          onChange={e => { setFiltroStatus(e.target.value as typeof filtroStatus); setPage(1) }}
           className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
         >
           <option value="todos">Todos os status</option>
@@ -392,15 +440,15 @@ export default function AdminPedidosPage() {
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50">
                 <th className="px-4 py-3 text-left font-medium text-neutral-600">Pedido</th>
-                <th className="px-4 py-3 text-left font-medium text-neutral-600">Cliente</th>
-                <th className="px-4 py-3 text-center font-medium text-neutral-600">Status</th>
-                <th className="px-4 py-3 text-right font-medium text-neutral-600">Total</th>
-                <th className="px-4 py-3 text-right font-medium text-neutral-600">Data</th>
+                <ThSort label="Cliente" col="cliente" current={sortKey} dir={sortDir} onSort={toggleSort} align="left" />
+                <ThSort label="Status" col="status" current={sortKey} dir={sortDir} onSort={toggleSort} align="center" />
+                <ThSort label="Total" col="total" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
+                <ThSort label="Data" col="data" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
                 <th className="px-4 py-3 text-right font-medium text-neutral-600"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {pedidosFiltrados.map(p => (
+              {pedidosPaginados.map(p => (
                 <tr key={p.id} className="hover:bg-neutral-50 transition-colors">
                   <td className="px-4 py-3">
                     <p className="font-mono text-xs text-neutral-500">#{p.id.slice(0, 8).toUpperCase()}</p>
@@ -432,6 +480,13 @@ export default function AdminPedidosPage() {
               ))}
             </tbody>
           </table>
+          <Pagination
+            total={pedidosFiltrados.length}
+            page={page}
+            pageSize={pageSize}
+            onPage={setPage}
+            onPageSize={s => { setPageSize(s); setPage(1) }}
+          />
         </div>
       )}
 

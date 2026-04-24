@@ -47,17 +47,19 @@ function ProductCard({ product, listMode = false }: ProductCardProps) {
             {product.descricao && (
               <p className="hidden text-sm text-neutral-500 line-clamp-2 sm:block">{product.descricao}</p>
             )}
-            <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-2">
-              <div>
+            <div className="mt-auto pt-2">
+              <div className="mb-2">
                 {temDesconto && <p className="text-xs text-neutral-400 line-through">{formatarPreco(product.preco)}</p>}
                 <p className="text-lg font-bold text-brand">{formatarPreco(precoFinal)}</p>
               </div>
-              <Link
-                to={`/produtos/${product.slug}`}
-                className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-hover hover:shadow-md active:bg-brand-dark"
-              >
-                Ver Detalhes
-              </Link>
+              <div className="flex justify-center">
+                <Link
+                  to={`/produtos/${product.slug}`}
+                  className="inline-flex items-center justify-center rounded-lg bg-brand px-6 py-1.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-hover hover:shadow-md active:bg-brand-dark"
+                >
+                  Ver Detalhes
+                </Link>
+              </div>
             </div>
           </div>
         </div>

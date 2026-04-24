@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useProdutosAdmin } from '../controllers/useProdutosAdmin'
 import type { ProdutoAdmin } from '../controllers/useProdutosAdmin'
+import Pagination from '@components/ui/Pagination'
 
 const FORNECEDOR_FITACABO = '00000000-0000-0000-0000-000000000001'
 
@@ -443,6 +444,32 @@ function FormModal({ produto, onClose, onCreate, onUpdate, uploadImagem }: FormM
 }
 
 // =====================================================
+// CABEÇALHO ORDENÁVEL
+// =====================================================
+type SortDir = 'asc' | 'desc'
+type SortKeyEstoque = 'nome' | 'categoria' | 'preco' | 'estoque'
+
+function ThSort({ label, col, current, dir, onSort, align = 'left' }: {
+  label: string; col: SortKeyEstoque; current: SortKeyEstoque
+  dir: SortDir; onSort: (c: SortKeyEstoque) => void; align?: 'left' | 'right' | 'center'
+}) {
+  const active = current === col
+  return (
+    <th
+      onClick={() => onSort(col)}
+      className={`cursor-pointer select-none px-4 py-3 text-${align} font-medium text-neutral-600 hover:text-neutral-900`}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        <span className={`text-xs ${active ? 'text-brand' : 'text-neutral-300'}`}>
+          {active ? (dir === 'asc' ? '↑' : '↓') : '↕'}
+        </span>
+      </span>
+    </th>
+  )
+}
+
+// =====================================================
 // PÁGINA PRINCIPAL
 // =====================================================
 export default function AdminEstoquePage() {
@@ -450,6 +477,16 @@ export default function AdminEstoquePage() {
 
   const [busca, setBusca] = useState('')
   const [filtroStatus, setFiltroStatus] = useState<'todos' | 'ativo' | 'inativo'>('todos')
+  const [sortKey, setSortKey] = useState<SortKeyEstoque>('nome')
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+
+  function toggleSort(col: SortKeyEstoque) {
+    if (sortKey === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortKey(col); setSortDir('asc') }
+    setPage(1)
+  }
   const [modalForm, setModalForm] = useState<{ aberto: boolean; produto: ProdutoAdmin | null }>({ aberto: false, produto: null })
   const [modalAjuste, setModalAjuste] = useState<ProdutoAdmin | null>(null)
   const [modalHistorico, setModalHistorico] = useState<ProdutoAdmin | null>(null)
@@ -460,11 +497,22 @@ export default function AdminEstoquePage() {
     setTimeout(() => setFeedback(null), 4000)
   }
 
-  const produtosFiltrados = produtos.filter(p => {
-    const matchBusca = !busca || p.nome.toLowerCase().includes(busca.toLowerCase()) || (p.sku ?? '').toLowerCase().includes(busca.toLowerCase())
-    const matchStatus = filtroStatus === 'todos' || (filtroStatus === 'ativo' ? p.ativo : !p.ativo)
-    return matchBusca && matchStatus
-  })
+  const produtosFiltrados = produtos
+    .filter(p => {
+      const matchBusca = !busca || p.nome.toLowerCase().includes(busca.toLowerCase()) || (p.sku ?? '').toLowerCase().includes(busca.toLowerCase())
+      const matchStatus = filtroStatus === 'todos' || (filtroStatus === 'ativo' ? p.ativo : !p.ativo)
+      return matchBusca && matchStatus
+    })
+    .sort((a, b) => {
+      const m = sortDir === 'asc' ? 1 : -1
+      if (sortKey === 'nome') return m * a.nome.localeCompare(b.nome, 'pt-BR')
+      if (sortKey === 'categoria') return m * a.categoria.localeCompare(b.categoria, 'pt-BR')
+      if (sortKey === 'preco') return m * (a.preco - b.preco)
+      if (sortKey === 'estoque') return m * (a.estoque - b.estoque)
+      return 0
+    })
+
+  const produtosPaginados = produtosFiltrados.slice((page - 1) * pageSize, page * pageSize)
 
   async function handleCreate(data: ProdutoFormData) {
     const payload = data as unknown as Parameters<typeof create>[0]
@@ -535,12 +583,12 @@ export default function AdminEstoquePage() {
           type="text"
           placeholder="Buscar por nome ou SKU..."
           value={busca}
-          onChange={e => setBusca(e.target.value)}
+          onChange={e => { setBusca(e.target.value); setPage(1) }}
           className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
         />
         <select
           value={filtroStatus}
-          onChange={e => setFiltroStatus(e.target.value as typeof filtroStatus)}
+          onChange={e => { setFiltroStatus(e.target.value as typeof filtroStatus); setPage(1) }}
           className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
         >
           <option value="todos">Todos</option>
@@ -570,16 +618,16 @@ export default function AdminEstoquePage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50">
-                <th className="px-4 py-3 text-left font-medium text-neutral-600">Produto</th>
-                <th className="px-4 py-3 text-left font-medium text-neutral-600">Categoria</th>
-                <th className="px-4 py-3 text-right font-medium text-neutral-600">Preço</th>
-                <th className="px-4 py-3 text-right font-medium text-neutral-600">Estoque</th>
+                <ThSort label="Produto" col="nome" current={sortKey} dir={sortDir} onSort={toggleSort} align="left" />
+                <ThSort label="Categoria" col="categoria" current={sortKey} dir={sortDir} onSort={toggleSort} align="left" />
+                <ThSort label="Preço" col="preco" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
+                <ThSort label="Estoque" col="estoque" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
                 <th className="px-4 py-3 text-center font-medium text-neutral-600">Status</th>
                 <th className="px-4 py-3 text-right font-medium text-neutral-600">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {produtosFiltrados.map(p => (
+              {produtosPaginados.map(p => (
                 <tr key={p.id} className="hover:bg-neutral-50 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -671,6 +719,13 @@ export default function AdminEstoquePage() {
               ))}
             </tbody>
           </table>
+          <Pagination
+            total={produtosFiltrados.length}
+            page={page}
+            pageSize={pageSize}
+            onPage={setPage}
+            onPageSize={s => { setPageSize(s); setPage(1) }}
+          />
         </div>
       )}
 

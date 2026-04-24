@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useClientesAdmin } from '../controllers/useClientesAdmin'
 import type { ClienteAdmin, PedidoResumo } from '../controllers/useClientesAdmin'
+import Pagination from '@components/ui/Pagination'
 
 const roleLabel: Record<string, string> = {
   cliente: 'Cliente',
@@ -331,6 +332,32 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags 
 }
 
 // =====================================================
+// CABEÇALHO ORDENÁVEL
+// =====================================================
+type SortDir = 'asc' | 'desc'
+type SortKeyClientes = 'nome' | 'role' | 'cadastro'
+
+function ThSort({ label, col, current, dir, onSort, align = 'left' }: {
+  label: string; col: SortKeyClientes; current: SortKeyClientes
+  dir: SortDir; onSort: (c: SortKeyClientes) => void; align?: 'left' | 'right' | 'center'
+}) {
+  const active = current === col
+  return (
+    <th
+      onClick={() => onSort(col)}
+      className={`cursor-pointer select-none px-4 py-3 text-${align} font-medium text-neutral-600 hover:text-neutral-900`}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        <span className={`text-xs ${active ? 'text-brand' : 'text-neutral-300'}`}>
+          {active ? (dir === 'asc' ? '↑' : '↓') : '↕'}
+        </span>
+      </span>
+    </th>
+  )
+}
+
+// =====================================================
 // PÁGINA PRINCIPAL
 // =====================================================
 export default function AdminClientesPage() {
@@ -339,14 +366,34 @@ export default function AdminClientesPage() {
   const [busca, setBusca] = useState('')
   const [filtroRole, setFiltroRole] = useState<'todos' | 'cliente' | 'funcionario' | 'admin'>('todos')
   const [clienteSelecionado, setClienteSelecionado] = useState<ClienteAdmin | null>(null)
+  const [sortKey, setSortKey] = useState<SortKeyClientes>('cadastro')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
 
-  const clientesFiltrados = clientes.filter(c => {
-    const matchBusca = !busca ||
-      c.email.toLowerCase().includes(busca.toLowerCase()) ||
-      (c.nomeCompleto ?? '').toLowerCase().includes(busca.toLowerCase())
-    const matchRole = filtroRole === 'todos' || c.role === filtroRole
-    return matchBusca && matchRole
-  })
+  function toggleSort(col: SortKeyClientes) {
+    if (sortKey === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortKey(col); setSortDir('asc') }
+    setPage(1)
+  }
+
+  const clientesFiltrados = clientes
+    .filter(c => {
+      const matchBusca = !busca ||
+        c.email.toLowerCase().includes(busca.toLowerCase()) ||
+        (c.nomeCompleto ?? '').toLowerCase().includes(busca.toLowerCase())
+      const matchRole = filtroRole === 'todos' || c.role === filtroRole
+      return matchBusca && matchRole
+    })
+    .sort((a, b) => {
+      const m = sortDir === 'asc' ? 1 : -1
+      if (sortKey === 'nome') return m * ((a.nomeCompleto ?? a.email).localeCompare(b.nomeCompleto ?? b.email, 'pt-BR'))
+      if (sortKey === 'role') return m * a.role.localeCompare(b.role, 'pt-BR')
+      if (sortKey === 'cadastro') return m * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      return 0
+    })
+
+  const clientesPaginados = clientesFiltrados.slice((page - 1) * pageSize, page * pageSize)
 
   const totalClientes = clientes.filter(c => c.role === 'cliente').length
   const totalFuncionarios = clientes.filter(c => c.role === 'funcionario').length
@@ -375,12 +422,12 @@ export default function AdminClientesPage() {
           type="text"
           placeholder="Buscar por nome ou e-mail..."
           value={busca}
-          onChange={e => setBusca(e.target.value)}
+          onChange={e => { setBusca(e.target.value); setPage(1) }}
           className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
         />
         <select
           value={filtroRole}
-          onChange={e => setFiltroRole(e.target.value as typeof filtroRole)}
+          onChange={e => { setFiltroRole(e.target.value as typeof filtroRole); setPage(1) }}
           className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
         >
           <option value="todos">Todos</option>
@@ -406,16 +453,16 @@ export default function AdminClientesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50">
-                <th className="px-4 py-3 text-left font-medium text-neutral-600">Usuário</th>
+                <ThSort label="Usuário" col="nome" current={sortKey} dir={sortDir} onSort={toggleSort} align="left" />
                 <th className="px-4 py-3 text-left font-medium text-neutral-600">Contato</th>
                 <th className="px-4 py-3 text-center font-medium text-neutral-600">Tipo</th>
-                <th className="px-4 py-3 text-center font-medium text-neutral-600">Acesso</th>
-                <th className="px-4 py-3 text-right font-medium text-neutral-600">Cadastro</th>
+                <ThSort label="Acesso" col="role" current={sortKey} dir={sortDir} onSort={toggleSort} align="center" />
+                <ThSort label="Cadastro" col="cadastro" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
                 <th className="px-4 py-3 text-right font-medium text-neutral-600"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {clientesFiltrados.map(c => (
+              {clientesPaginados.map(c => (
                 <tr key={c.id} className="hover:bg-neutral-50 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -454,6 +501,13 @@ export default function AdminClientesPage() {
               ))}
             </tbody>
           </table>
+          <Pagination
+            total={clientesFiltrados.length}
+            page={page}
+            pageSize={pageSize}
+            onPage={setPage}
+            onPageSize={s => { setPageSize(s); setPage(1) }}
+          />
         </div>
       )}
 

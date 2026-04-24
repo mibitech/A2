@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useFinanceiroAdmin } from '../controllers/useFinanceiroAdmin'
 import type { LancamentoCaixa, TipoLancamento, CategoriaCaixa, TipoCategoria } from '../controllers/useFinanceiroAdmin'
 import { useAuthContext } from '@features/auth/contexts/AuthContext'
+import Pagination from '@components/ui/Pagination'
 
 const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const fmtData = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('pt-BR')
@@ -329,6 +330,8 @@ export default function AdminFinanceiroPage() {
   const [modalAberto, setModalAberto] = useState(false)
   const [excluindo, setExcluindo] = useState<string | null>(null)
   const [feedbackExcluir, setFeedbackExcluir] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
 
   async function handleExcluir(l: LancamentoCaixa) {
     if (!confirm(`Excluir "${l.descricao}"?`)) return
@@ -408,7 +411,7 @@ export default function AdminFinanceiroPage() {
           {/* Filtros */}
           <div className="flex gap-2 mb-4">
             {(['todos', 'entrada', 'saida'] as const).map(f => (
-              <button key={f} onClick={() => setFiltroTipo(f)}
+              <button key={f} onClick={() => { setFiltroTipo(f); setPage(1) }}
                 className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
                   filtroTipo === f
                     ? 'border-brand bg-brand text-white'
@@ -461,7 +464,7 @@ export default function AdminFinanceiroPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100">
-                  {lancamentos.map(l => (
+                  {lancamentos.slice((page - 1) * pageSize, page * pageSize).map(l => (
                     <tr key={l.id} className="hover:bg-neutral-50 transition-colors">
                       <td className="px-4 py-3 text-xs text-neutral-500 whitespace-nowrap">{fmtData(l.dataRef)}</td>
                       <td className="px-4 py-3">
@@ -495,6 +498,13 @@ export default function AdminFinanceiroPage() {
                   ))}
                 </tbody>
               </table>
+              <Pagination
+                total={lancamentos.length}
+                page={page}
+                pageSize={pageSize}
+                onPage={setPage}
+                onPageSize={s => { setPageSize(s); setPage(1) }}
+              />
             </div>
           )}
         </>

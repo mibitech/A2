@@ -52,7 +52,7 @@ function ProductsPage() {
 
   const hasActiveFilters = !!(filters.categoria || filters.precoMax)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list')
 
   const SORT_OPTIONS = [
     { value: 'relevancia',   label: 'Mais relevantes' },

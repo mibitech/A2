@@ -11,6 +11,7 @@ function ProductDetailPage() {
   const { product, isLoading, error } = useProduct(slug!)
   const { addItem, isInCart, getItemQuantity, itemsCount } = useCart()
   const [showAddedMessage, setShowAddedMessage] = useState(false)
+  const [imagemAtiva, setImagemAtiva] = useState(0)
 
   const handleAddToCart = () => {
     if (!product) return
@@ -100,27 +101,32 @@ function ProductDetailPage() {
               <Card className="overflow-hidden">
                 <div className="aspect-square bg-neutral-100">
                   <img
-                    src={product.imagens[0] || '/placeholder-product.jpg'}
+                    src={product.imagens[imagemAtiva] || '/placeholder-product.jpg'}
                     alt={product.nome}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover transition-opacity duration-200"
                   />
                 </div>
               </Card>
 
               {/* Thumbnails */}
               {product.imagens.length > 1 && (
-                <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4">
-                  {product.imagens.slice(0, 4).map((img, idx) => (
-                    <div
+                <div className="mt-4 grid grid-cols-4 gap-2">
+                  {product.imagens.map((img, idx) => (
+                    <button
                       key={idx}
-                      className="aspect-square overflow-hidden rounded-lg border-2 border-neutral-200"
+                      onClick={() => setImagemAtiva(idx)}
+                      className={`aspect-square overflow-hidden rounded-lg border-2 transition-colors ${
+                        idx === imagemAtiva
+                          ? 'border-brand'
+                          : 'border-neutral-200 hover:border-neutral-400'
+                      }`}
                     >
                       <img
                         src={img}
                         alt={`${product.nome} - ${idx + 1}`}
                         className="h-full w-full object-cover"
                       />
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}

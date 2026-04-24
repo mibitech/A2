@@ -1,4 +1,11 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return null
+}
 import DesignSystemPage from './features/design-system/views/DesignSystemPage'
 import LandingPage from './features/landing/views/LandingPage'
 import LoginPage from './features/auth/views/LoginPage'
@@ -24,6 +31,7 @@ import WhatsAppBubble from './components/layout/WhatsAppBubble'
 function App() {
   return (
     <>
+    <ScrollToTop />
     <Routes>
       {/* Landing Page */}
       <Route path="/" element={<LandingPage />} />

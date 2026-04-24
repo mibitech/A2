@@ -12,3 +12,5 @@ export type { TagProps } from './Tag'
 
 export { default as IconWithText } from './IconWithText'
 export type { IconWithTextProps } from './IconWithText'
+
+export { default as Pagination } from './Pagination'
