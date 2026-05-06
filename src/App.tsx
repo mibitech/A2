@@ -15,6 +15,9 @@ import ResetPasswordPage from './features/auth/views/ResetPasswordPage'
 import ProductsPage from './features/products/views/ProductsPage'
 import ProductDetailPage from './features/products/views/ProductDetailPage'
 import CartPage from './features/cart/views/CartPage'
+import CheckoutPage from './features/checkout/views/CheckoutPage'
+import CheckoutSuccessPage from './features/checkout/views/CheckoutSuccessPage'
+import CheckoutCancelPage from './features/checkout/views/CheckoutCancelPage'
 import MinhaContaPage from './features/conta/views/MinhaContaPage'
 import { ProtectedRoute } from './features/auth/components/ProtectedRoute'
 import AdminLayout from './features/admin/views/AdminLayout'
@@ -53,6 +56,9 @@ function App() {
 
       {/* Cart & Checkout Routes */}
       <Route path="/carrinho" element={<CartPage />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/checkout/sucesso" element={<CheckoutSuccessPage />} />
+      <Route path="/checkout/cancelado" element={<CheckoutCancelPage />} />
 
       {/* Minha Conta — qualquer usuário logado */}
       <Route

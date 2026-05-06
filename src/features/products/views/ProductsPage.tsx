@@ -26,12 +26,14 @@ function ProductsPage() {
     page,
     totalPages,
     isLoading,
+    isRetrying,
     error,
     categories,
     filters,
     updateFilters,
     clearFilters,
     goToPage,
+    refresh,
   } = useProducts()
 
   const { itemsCount } = useCart()
@@ -207,9 +209,15 @@ function ProductsPage() {
                 </div>
               </div>
 
-              {error && (
-                <div className="mb-4 rounded-lg bg-error-light p-4 text-error-dark">
-                  {error}
+              {error && !isLoading && (
+                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-6 text-center">
+                  <p className="mb-3 text-red-700">{error}</p>
+                  <button
+                    onClick={refresh}
+                    className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand/90"
+                  >
+                    Tentar novamente
+                  </button>
                 </div>
               )}
 
@@ -217,10 +225,15 @@ function ProductsPage() {
                 <div className="flex items-center justify-center py-12">
                   <div className="text-center">
                     <div className="mb-4 inline-block h-8 w-8 animate-spin rounded-full border-4 border-brand border-t-transparent"></div>
-                    <p className="text-neutral-600">Carregando produtos...</p>
+                    <p className="text-neutral-600">
+                      {isRetrying ? 'Reconectando...' : 'Carregando produtos...'}
+                    </p>
+                    {isRetrying && (
+                      <p className="mt-1 text-xs text-neutral-400">A conexão caiu, tentando novamente…</p>
+                    )}
                   </div>
                 </div>
-              ) : products.length === 0 ? (
+              ) : !error && products.length === 0 ? (
                 <div className="rounded-xl border border-neutral-200 bg-white p-8 text-center">
                   <p className="text-neutral-600">
                     Nenhum produto encontrado com os filtros aplicados.

@@ -116,16 +116,16 @@ export async function getItensPedido(
   pedidoId: string
 ): Promise<{ itens: ItemPedidoAdmin[]; error: string | null }> {
   try {
-    const { data, error } = await Promise.race([
-      supabase
-        .from('itens_pedido')
-        .select(`
-          id, quantidade, preco_unitario, subtotal,
-          produto:produtos(id, nome, sku, imagens)
-        `)
-        .eq('pedido_id', pedidoId),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
-    ]) as {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15_000)
+    const { data, error } = await supabase
+      .from('itens_pedido')
+      .select(`
+        id, quantidade, preco_unitario, subtotal,
+        produto:produtos(id, nome, sku, imagens)
+      `)
+      .eq('pedido_id', pedidoId)
+      .abortSignal(controller.signal) as unknown as {
       data: {
         id: string
         quantidade: number
@@ -136,6 +136,7 @@ export async function getItensPedido(
       error: { message: string } | null
     }
 
+    clearTimeout(timeoutId)
     if (error) return { itens: [], error: error.message }
 
     const itens: ItemPedidoAdmin[] = (data ?? []).map(i => ({
@@ -167,6 +168,44 @@ export async function updateStatusPedido(
     return { error: null }
   } catch {
     return { error: 'Erro ao atualizar status' }
+  }
+}
+
+// ===== REENVIAR E-MAIL DE CONFIRMAÇÃO =====
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const _env = (import.meta as any).env
+const _FUNCTION_URL = `${_env.VITE_SUPABASE_URL}/functions/v1/send-order-confirmation`
+const _ANON_KEY: string = _env.VITE_SUPABASE_ANON_KEY
+
+export async function reenviarEmailConfirmacao(
+  pedidoId: string
+): Promise<{ error: string | null }> {
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 20_000)
+
+    const response = await fetch(_FUNCTION_URL, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${_ANON_KEY}`,
+        'apikey': _ANON_KEY,
+      },
+      body: JSON.stringify({ pedido_id: pedidoId }),
+    })
+
+    clearTimeout(timer)
+    const data = await response.json()
+
+    if (!response.ok) return { error: data?.error ?? `Erro ${response.status}` }
+    if (data?.error) return { error: data.error }
+    return { error: null }
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      return { error: 'Tempo limite atingido ao enviar e-mail' }
+    }
+    return { error: 'Erro ao reenviar e-mail' }
   }
 }
 

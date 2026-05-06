@@ -108,8 +108,12 @@ export async function getProducts(
     }
     query = query.range(from, to)
 
-    // Executar query
-    const { data, error, count } = await query
+    // AbortController cancela a requisição de verdade ao expirar (libera a conexão)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8_000)
+
+    const { data, error, count } = await query.abortSignal(controller.signal)
+    clearTimeout(timeoutId)
 
     if (error) {
       console.error('Erro ao buscar produtos:', error)
@@ -148,10 +152,15 @@ export async function getProducts(
       error: null,
     }
   } catch (error) {
-    console.error('Erro inesperado ao buscar produtos:', error)
+    const isAbort = error instanceof Error && error.name === 'AbortError'
+    console.error('Erro ao buscar produtos:', error)
     return {
       data: null,
-      error: { message: 'Erro inesperado ao buscar produtos' },
+      error: {
+        message: isAbort
+          ? 'Conexão lenta — reconectando...'
+          : 'Erro inesperado ao buscar produtos',
+      },
     }
   }
 }
@@ -210,10 +219,14 @@ export async function getCategories(): Promise<{
   error: ProductsError | null
 }> {
   try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8_000)
     const { data, error } = await supabase
       .from('produtos')
       .select('categoria')
       .eq('ativo', true)
+      .abortSignal(controller.signal)
+    clearTimeout(timeoutId)
 
     if (error) {
       console.error('Erro ao buscar categorias:', error)

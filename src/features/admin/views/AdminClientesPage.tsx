@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useClientesAdmin } from '../controllers/useClientesAdmin'
 import type { ClienteAdmin, PedidoResumo } from '../controllers/useClientesAdmin'
+import { enviarCampanha, getCampanhas } from '../services/campanhas.admin.service'
+import type { Campanha, SegmentoCampanha } from '../services/campanhas.admin.service'
 import Pagination from '@components/ui/Pagination'
 
 const roleLabel: Record<string, string> = {
@@ -358,6 +360,115 @@ function ThSort({ label, col, current, dir, onSort, align = 'left' }: {
 }
 
 // =====================================================
+// MODAL DE NOVA CAMPANHA
+// =====================================================
+const TAGS_CAMPANHA = ['vip', 'atacado', 'recorrente', 'inativo', 'prospect', 'prioritário']
+
+function ModalCampanha({ onClose, onSent }: { onClose: () => void; onSent: () => void }) {
+  const [titulo, setTitulo] = useState('')
+  const [assunto, setAssunto] = useState('')
+  const [html, setHtml] = useState('<p>Olá {{nome}},</p>\n\n<p>Mensagem aqui.</p>\n\n<p>Atenciosamente,<br>A2 Brasil Supplies</p>')
+  const [segmento, setSegmento] = useState<SegmentoCampanha>('todos')
+  const [tag, setTag] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [resultado, setResultado] = useState<{ enviados: number } | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+
+  async function handleEnviar() {
+    if (!titulo.trim() || !assunto.trim() || !html.trim()) { setErro('Preencha todos os campos'); return }
+    if (segmento === 'por_tag' && !tag) { setErro('Selecione uma tag'); return }
+    setEnviando(true); setErro(null)
+    const { enviados, error } = await enviarCampanha({ titulo, assunto, conteudoHtml: html, segmento, tagFiltro: tag || undefined })
+    setEnviando(false)
+    if (error) { setErro(error); return }
+    setResultado({ enviados })
+    onSent()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
+          <h2 className="font-bold text-neutral-900">Nova Campanha de E-mail</h2>
+          <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-neutral-100 text-neutral-400">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div className="space-y-4 p-6">
+          {resultado ? (
+            <div className="rounded-xl bg-green-50 p-6 text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <p className="text-lg font-bold text-green-800">Campanha enviada!</p>
+              <p className="text-sm text-green-700">{resultado.enviados} e-mail(s) entregues</p>
+              <button onClick={onClose} className="mt-4 rounded-lg bg-brand px-6 py-2 text-sm font-semibold text-white hover:bg-brand/90">Fechar</button>
+            </div>
+          ) : (
+            <>
+              {erro && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{erro}</div>}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-neutral-700">Título interno</label>
+                <input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex: Promoção Maio 2026"
+                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-neutral-700">Assunto do e-mail</label>
+                <input value={assunto} onChange={e => setAssunto(e.target.value)} placeholder="Ex: Novidades da A2 Brasil Supplies"
+                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-neutral-700">
+                  Destinatários
+                </label>
+                <select value={segmento} onChange={e => setSegmento(e.target.value as SegmentoCampanha)}
+                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand">
+                  <option value="todos">Todos os usuários</option>
+                  <option value="clientes">Somente clientes</option>
+                  <option value="por_tag">Por tag</option>
+                </select>
+                {segmento === 'por_tag' && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {TAGS_CAMPANHA.map(t => (
+                      <button key={t} onClick={() => setTag(t)}
+                        className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${tag === t ? 'bg-brand text-white' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'}`}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-neutral-700">
+                  Conteúdo HTML <span className="font-normal text-neutral-400">(use {'{{nome}}'} para personalizar)</span>
+                </label>
+                <textarea value={html} onChange={e => setHtml(e.target.value)} rows={8}
+                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand"/>
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button onClick={onClose} className="rounded-lg border border-neutral-300 px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-50">Cancelar</button>
+                <button onClick={handleEnviar} disabled={enviando}
+                  className="flex items-center gap-2 rounded-lg bg-brand px-5 py-2 text-sm font-semibold text-white hover:bg-brand/90 disabled:opacity-60">
+                  {enviando ? (
+                    <><svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>Enviando...</>
+                  ) : (
+                    <><svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>Enviar campanha</>
+                  )}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// =====================================================
 // PÁGINA PRINCIPAL
 // =====================================================
 export default function AdminClientesPage() {
@@ -369,6 +480,17 @@ export default function AdminClientesPage() {
   const [sortKey, setSortKey] = useState<SortKeyClientes>('cadastro')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [page, setPage] = useState(1)
+  const [abaAtiva, setAbaAtiva] = useState<'clientes' | 'campanhas'>('clientes')
+  const [showCampanha, setShowCampanha] = useState(false)
+  const [campanhas, setCampanhas] = useState<Campanha[]>([])
+  const [loadingCampanhas, setLoadingCampanhas] = useState(false)
+
+  async function carregarCampanhas() {
+    setLoadingCampanhas(true)
+    const { campanhas } = await getCampanhas()
+    setCampanhas(campanhas)
+    setLoadingCampanhas(false)
+  }
   const [pageSize, setPageSize] = useState(20)
 
   function toggleSort(col: SortKeyClientes) {
@@ -402,19 +524,98 @@ export default function AdminClientesPage() {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-800">Clientes</h1>
+          <h1 className="text-2xl font-bold text-neutral-800">CRM</h1>
           <p className="mt-0.5 text-sm text-neutral-500">
             {clientes.length} usuários · {totalClientes} clientes · {totalFuncionarios} funcionários · {totalAdmins} admins
           </p>
         </div>
-        <button onClick={reload} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors">
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-        </button>
+        <div className="flex gap-2">
+          {abaAtiva === 'clientes' && (
+            <button onClick={reload} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          )}
+          <button onClick={() => setShowCampanha(true)}
+            className="flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand/90">
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            Nova campanha
+          </button>
+        </div>
       </div>
+
+      {/* Abas */}
+      <div className="mb-5 flex gap-1 border-b border-neutral-200">
+        {(['clientes', 'campanhas'] as const).map(aba => (
+          <button key={aba} onClick={() => { setAbaAtiva(aba); if (aba === 'campanhas') carregarCampanhas() }}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors capitalize ${
+              abaAtiva === aba ? 'border-brand text-brand' : 'border-transparent text-neutral-500 hover:text-neutral-700'
+            }`}>
+            {aba === 'clientes' ? 'Clientes' : 'Campanhas enviadas'}
+          </button>
+        ))}
+      </div>
+
+      {/* ABA CAMPANHAS */}
+      {abaAtiva === 'campanhas' && (
+        <div>
+          {loadingCampanhas ? (
+            <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-200 border-t-brand"/></div>
+          ) : campanhas.length === 0 ? (
+            <div className="rounded-xl border-2 border-dashed border-neutral-200 p-12 text-center">
+              <p className="text-sm text-neutral-400">Nenhuma campanha enviada ainda</p>
+              <button onClick={() => setShowCampanha(true)} className="mt-3 text-sm text-brand hover:underline">Criar primeira campanha</button>
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-neutral-200 bg-neutral-50">
+                    <th className="px-4 py-3 text-left font-medium text-neutral-600">Título</th>
+                    <th className="px-4 py-3 text-left font-medium text-neutral-600">Segmento</th>
+                    <th className="px-4 py-3 text-center font-medium text-neutral-600">Enviados</th>
+                    <th className="px-4 py-3 text-center font-medium text-neutral-600">Status</th>
+                    <th className="px-4 py-3 text-right font-medium text-neutral-600">Data</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-100">
+                  {campanhas.map(c => (
+                    <tr key={c.id} className="hover:bg-neutral-50">
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-neutral-800">{c.titulo}</p>
+                        <p className="text-xs text-neutral-400">{c.assunto}</p>
+                      </td>
+                      <td className="px-4 py-3 text-neutral-600">
+                        {c.segmento === 'todos' ? 'Todos' : c.segmento === 'clientes' ? 'Clientes' : `Tag: ${c.tagFiltro}`}
+                      </td>
+                      <td className="px-4 py-3 text-center font-medium text-neutral-700">{c.totalEnviados}</td>
+                      <td className="px-4 py-3 text-center">
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                          c.status === 'enviada' ? 'bg-green-100 text-green-700' :
+                          c.status === 'erro' ? 'bg-red-100 text-red-700' :
+                          c.status === 'enviando' ? 'bg-blue-100 text-blue-700' :
+                          'bg-neutral-100 text-neutral-600'
+                        }`}>{c.status}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right text-xs text-neutral-400">
+                        {new Date(c.createdAt).toLocaleDateString('pt-BR')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ABA CLIENTES */}
+      {abaAtiva === 'clientes' && <>
 
       {/* Filtros */}
       <div className="flex gap-3 mb-4">
@@ -531,6 +732,15 @@ export default function AdminClientesPage() {
             }
             return result
           }}
+        />
+      )}
+      </> }
+
+      {/* Modal Nova Campanha */}
+      {showCampanha && (
+        <ModalCampanha
+          onClose={() => setShowCampanha(false)}
+          onSent={() => { setAbaAtiva('campanhas'); carregarCampanhas() }}
         />
       )}
     </div>

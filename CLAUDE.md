@@ -95,7 +95,7 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 
 ---
 
-## 📌 Status do Projeto Hoje (2026-04-23)
+## 📌 Status do Projeto Hoje (2026-04-24)
 
 ### ✅ Concluído (Fase 1 — base)
 - Hero section + proposta de valor
@@ -118,16 +118,19 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 #### Épico 8 — Gestão de Estoque ✅
 - Tabela `movimentacoes_estoque` + bucket Storage `produtos`
 - CRUD completo de produtos, upload de imagens, histórico de movimentações
+- Ordenação clicável (Produto, Categoria, Preço, Estoque) + paginação (10/20/50/100)
 
 #### Épico 9 — CRM ✅ (US-20 + tags concluídos)
 - `AdminClientesPage`: tabela com busca, filtro por role, stats totais
 - `PerfilModal`: abas Info (role management + tags de segmentação) + Pedidos (lazy-load)
 - Tags: chips visuais, input com Enter, sugestões, salvar via `updateTagsCliente`
+- Ordenação clicável (Usuário, Acesso, Cadastro) + paginação
 - US-21 (campanhas por Brevo) — bloqueado aguardando chave Brevo
 
 #### Admin Pedidos ✅
 - `AdminPedidosPage`: tabela + cards de status + busca; DetalheModal com Itens, Entrega, Observações
 - Fluxo de avanço de status manual (sem Stripe)
+- Ordenação clicável (Cliente, Status, Total, Data) + paginação
 - Seed de 10 pedidos fake em `supabase/seeds/seed_pedidos_fake.sql` (pendente aplicação pelo usuário)
 
 #### Dashboard Admin ✅ (dados reais)
@@ -139,6 +142,7 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 #### US-22 parcial — Fluxo de Caixa Manual ✅
 - Tabela `lancamentos_caixa` + `categorias_caixa` com seed padrão
 - `AdminFinanceiroPage`: abas Lançamentos + Categorias; modal com seleção de categoria por tipo
+- Paginação na aba Lançamentos (10/20/50/100)
 
 #### Conteúdo Dinâmico do Site ✅
 - Bucket `site` + tabelas `hero_slides`, `conteudo_site`, `sobre_galeria`
@@ -151,24 +155,21 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - `WhatsAppBubble.tsx` — botão flutuante global, toggle liga/desliga pelo admin
 - Configuração em `/admin/site` → aba WhatsApp (número, mensagem, label, toggle)
 
-### ❌ Pendente (travado por dependência externa)
-- **US-13** — Checkout Stripe (sem chaves configuradas)
-- **US-14** — E-mail Brevo (sem chaves configuradas)
-- **US-19** — Alertas estoque mínimo (n8n + WhatsApp)
-- **US-21** — Campanhas CRM (Brevo)
-- **Épico 10 completo** — Financeiro Stripe (conciliação automática)
-- **Épico 11** — Automações n8n
+#### Sidebar Admin Colapsável ✅
+- Toggle ícones/expandido com botão (setas ‹‹/››) no topo da sidebar
+- Modo compacto (`w-16`): apenas ícones com tooltip CSS ao hover
+- Mobile (`< 1024px`): sempre inicia retraído
+- Desktop: preferência salva no `localStorage` (`admin_sidebar_collapsed`)
 
-#### Carrinho — Frete Mockado ✅
-- `CartPage.tsx` — componente `CalcFrete` com input de CEP, 10 faixas regionais (PAC + SEDEX), frete grátis ≥ R$ 500
-- Estrutura pronta para substituir por API real (Melhor Envio / Correios) quando disponível
-- Botão "Finalizar Compra" bloqueado até frete ser selecionado
+#### UX Catálogo de Produtos ✅
+- `ProductsPage.tsx` — visualização padrão alterada para **lista** (era grade)
+- `ProductCard.tsx` — botão "Ver Detalhes" sempre centralizado no rodapé (modo lista)
+- `ProductDetailPage.tsx` — thumbnails clicáveis trocam imagem principal
+- `App.tsx` — `ScrollToTop` global: toda navegação inicia no topo da página
 
-#### Cards de pedido com cores por status ✅
-- `AdminPedidosPage.tsx` — `STATUS_CARD` com borda + fundo + texto coloridos por status (mesmo padrão do financeiro)
-
-#### Rebranding completo ✅
-- "A2 Brasil Supplies" em todos os pontos: Header, Admin, Auth, Landing, Footer, Design System, Dashboard
+#### Seed Wireset ✅ (pronto para aplicar)
+- `supabase/seeds/seed_wireset_produtos.sql` — 63 produtos com `ativo=false`, `preco=0`
+- Ficam invisíveis no catálogo público até ativação manual na Fase 3
 
 ### ❌ Pendente (travado por dependência externa)
 - **US-13** — Checkout Stripe (sem chaves configuradas)
@@ -179,12 +180,13 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - **Épico 11** — Automações n8n
 
 ### 🚀 Próximas Ações (sem bloqueio externo)
-1. **Aplicar migration** `20260423000005_whatsapp_bubble.sql` no Supabase SQL Editor
-2. **Configurar WhatsApp**: `/admin/site` → aba WhatsApp → número real
-3. **Deploy**: `pnpm build && pm2 restart a2tech` no servidor `54.232.189.113`
+1. **Deploy**: `pnpm build && pm2 restart a2tech` no servidor `54.232.189.113`
+2. **Aplicar migration** `20260423000005_whatsapp_bubble.sql` no Supabase SQL Editor
+3. **Configurar WhatsApp**: `/admin/site` → aba WhatsApp → número real
 4. **Aplicar seed de pedidos fake**: `supabase/seeds/seed_pedidos_fake.sql`
-5. **Frete real**: integrar API Melhor Envio ou Correios quando disponível
-6. Quando chaves disponíveis: US-13 (Stripe) + US-14 (Brevo) + Épico 10
+5. **Aplicar seed Wireset** (opcional): `supabase/seeds/seed_wireset_produtos.sql`
+6. **Frete real**: integrar API Melhor Envio ou Correios quando disponível
+7. Quando chaves disponíveis: US-13 (Stripe) + US-14 (Brevo) + Épico 10
 
 ---
 
@@ -258,22 +260,17 @@ Ferramentas para integração com serviços externos. Claude pode usar MCPs para
 
 ## 🎯 Próximas Ações (Ordenadas)
 
-### 1. IMEDIATO — Aplicar seed de pedidos fake
-- Abrir `supabase/seeds/seed_pedidos_fake.sql` no Supabase SQL Editor
-- Executar para criar 5 clientes + 10 pedidos de teste
-- Testar `/admin/pedidos` e `/conta` com os dados
+### 1. IMEDIATO — Deploy + seeds pendentes
+- `pnpm build && pm2 restart a2tech` no servidor `54.232.189.113`
+- Aplicar `20260423000005_whatsapp_bubble.sql` no Supabase SQL Editor
+- Aplicar `supabase/seeds/seed_pedidos_fake.sql` (10 pedidos de teste)
+- Aplicar `supabase/seeds/seed_wireset_produtos.sql` (opcional — produtos ocultos)
 
-### 2. US-20 complemento — Tags de segmentação de clientes
-- Adicionar coluna `tags` (array text) na tabela `usuarios`
-- UI no PerfilModal do AdminClientesPage para adicionar/remover tags
-- Útil para US-21 (campanhas segmentadas por Brevo)
+### 2. Frete real (quando disponível)
+- Substituir `calcularFreteMock()` em `CartPage.tsx` por chamada à API dos Correios ou Melhor Envio
+- Estrutura já pronta para a troca
 
-### 3. US-22 parcial — Fluxo de caixa manual
-- Criar tabela `lancamentos_caixa` (migration)
-- CRUD de entradas e saídas manuais no AdminFinanceiroPage
-- Totalizador de saldo sem depender do Stripe
-
-### 4. Quando tiver as chaves Stripe/Brevo
+### 3. Quando tiver as chaves Stripe/Brevo
 - **US-13** [Stripe]: Edge Function + Frontend Checkout + Webhook
 - **US-14** [Brevo]: n8n workflow + template e-mail
 - **Épico 10 completo** + **Épico 11** (automações n8n)

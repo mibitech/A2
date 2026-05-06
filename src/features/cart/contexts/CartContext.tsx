@@ -35,20 +35,11 @@ function saveCartToStorage(items: CartItem[]) {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([])
-  const [total, setTotal] = useState(0)
-  const [itemsCount, setItemsCount] = useState(0)
-
-  // Carregar carrinho do localStorage no mount
-  useEffect(() => {
-    const stored = loadCartFromStorage()
-    if (stored.length > 0) {
-      setItems(stored)
-      const totals = calculateCartTotals(stored)
-      setTotal(totals.total)
-      setItemsCount(totals.itemsCount)
-    }
-  }, [])
+  // Inicializador lazy: lê do localStorage uma única vez na montagem,
+  // evitando que o efeito de salvamento sobrescreva os dados antes de carregá-los
+  const [items, setItems] = useState<CartItem[]>(() => loadCartFromStorage())
+  const [total, setTotal] = useState(() => calculateCartTotals(loadCartFromStorage()).total)
+  const [itemsCount, setItemsCount] = useState(() => calculateCartTotals(loadCartFromStorage()).itemsCount)
 
   // Salvar no localStorage e recalcular totais quando items mudar
   useEffect(() => {
@@ -107,6 +98,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Limpar carrinho
   const clearCart = () => {
     setItems([])
+    saveCartToStorage([]) // limpa localStorage imediatamente, sem esperar o efeito
   }
 
   // Verificar se produto está no carrinho

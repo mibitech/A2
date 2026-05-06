@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { usePedidosAdmin } from '../controllers/usePedidosAdmin'
 import type { PedidoAdmin, ItemPedidoAdmin, StatusPedido } from '../controllers/usePedidosAdmin'
+import { reenviarEmailConfirmacao } from '../services/pedidos.admin.service'
 import Pagination from '@components/ui/Pagination'
 
 const STATUS_LABEL: Record<StatusPedido, string> = {
@@ -58,6 +59,7 @@ function DetalheModal({ pedido, onClose, getItens, onUpdateStatus, onUpdateObser
   const [salvandoStatus, setSalvandoStatus] = useState(false)
   const [observacoes, setObservacoes] = useState(pedido.observacoes ?? '')
   const [salvandoObs, setSalvandoObs] = useState(false)
+  const [enviandoEmail, setEnviandoEmail] = useState(false)
   const [feedback, setFeedback] = useState<{ msg: string; tipo: 'ok' | 'erro' } | null>(null)
   const [statusAtual, setStatusAtual] = useState(pedido.status)
 
@@ -102,6 +104,17 @@ function DetalheModal({ pedido, onClose, getItens, onUpdateStatus, onUpdateObser
     }
   }
 
+  async function handleReenviarEmail() {
+    setEnviandoEmail(true)
+    const { error } = await reenviarEmailConfirmacao(pedido.id)
+    setEnviandoEmail(false)
+    if (error) {
+      showFeedback('Erro ao enviar e-mail: ' + error, 'erro')
+    } else {
+      showFeedback('E-mail de confirmação reenviado!', 'ok')
+    }
+  }
+
   const proximos = PROXIMOS_STATUS[statusAtual]
   const end = pedido.enderecoEntrega
 
@@ -121,10 +134,27 @@ function DetalheModal({ pedido, onClose, getItens, onUpdateStatus, onUpdateObser
             </p>
             <p className="text-xs text-neutral-400">{pedido.usuario?.email}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COLOR[statusAtual]}`}>
               {STATUS_LABEL[statusAtual]}
             </span>
+            <button
+              onClick={handleReenviarEmail}
+              disabled={enviandoEmail}
+              title="Reenviar e-mail de confirmação ao cliente"
+              className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-brand transition-colors disabled:opacity-50"
+            >
+              {enviandoEmail ? (
+                <svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              )}
+            </button>
             <button onClick={onClose} className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 transition-colors">
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

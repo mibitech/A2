@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../contexts/CartContext'
 import { Button, Card } from '@components/ui'
 import { Header, Footer } from '@components/layout'
@@ -121,6 +121,8 @@ function CalcFrete({ subtotal, onFreteSelect, freteSelecionado }: CalcFreteProps
     await new Promise(r => setTimeout(r, 800))
     const resultado = calcularFreteMock(nums, subtotal)
     setOpcoes(resultado)
+    // Seleciona automaticamente o primeiro (mais barato)
+    if (resultado.length > 0) onFreteSelect(resultado[0])
     setCalculando(false)
   }
 
@@ -207,7 +209,19 @@ function CalcFrete({ subtotal, onFreteSelect, freteSelecionado }: CalcFreteProps
 
 function CartPage() {
   const { items, total, itemsCount, removeItem, updateQuantity, clearCart } = useCart()
+  const navigate = useNavigate()
   const [freteSelecionado, setFreteSelecionado] = useState<OpcaoFrete | null>(null)
+
+  function handleFinalizarCompra() {
+    if (!freteSelecionado) return
+    sessionStorage.setItem('a2tech_frete', JSON.stringify({
+      id: freteSelecionado.id,
+      nome: freteSelecionado.nome,
+      prazo: freteSelecionado.prazo,
+      valor: freteSelecionado.valor,
+    }))
+    navigate('/checkout')
+  }
 
   const totalComFrete = total + (freteSelecionado?.valor ?? 0)
 
@@ -353,7 +367,7 @@ function CartPage() {
                   </div>
                 </div>
 
-                <Button variant="primary" size="lg" fullWidth disabled={!freteSelecionado}>
+                <Button variant="primary" size="lg" fullWidth disabled={!freteSelecionado} onClick={handleFinalizarCompra}>
                   Finalizar Compra
                 </Button>
 

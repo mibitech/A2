@@ -17,6 +17,7 @@ interface UseProductsState {
   page: number
   totalPages: number
   isLoading: boolean
+  isRetrying: boolean
   error: string | null
   categories: CategoryWithCount[]
 }
@@ -27,6 +28,7 @@ const initialState: UseProductsState = {
   page: 1,
   totalPages: 0,
   isLoading: false,
+  isRetrying: false,
   error: null,
   categories: [] as CategoryWithCount[],
 }
@@ -35,17 +37,28 @@ export function useProducts(initialFilters: ProductFilters = {}) {
   const [state, setState] = useState<UseProductsState>(initialState)
   const [filters, setFilters] = useState<ProductFilters>(initialFilters)
 
-  // Carregar produtos
+  // Carregar produtos com retry automático (trata conexão ociosa)
   const loadProducts = useCallback(
-    async (page: number = 1) => {
-      setState((prev) => ({ ...prev, isLoading: true, error: null }))
+    async (page: number = 1, tentativa = 1) => {
+      setState((prev) => ({
+        ...prev,
+        isLoading: true,
+        isRetrying: tentativa > 1,
+        error: null,
+      }))
 
       const { data, error } = await productsService.getProducts(filters, page)
 
       if (error) {
+        // Se falhou na 1ª tentativa, aguarda 1s e tenta novamente automaticamente
+        if (tentativa === 1) {
+          await new Promise((r) => setTimeout(r, 1_000))
+          return loadProducts(page, 2)
+        }
         setState((prev) => ({
           ...prev,
           isLoading: false,
+          isRetrying: false,
           error: error.message,
         }))
         return
@@ -59,6 +72,8 @@ export function useProducts(initialFilters: ProductFilters = {}) {
           page: data.page,
           totalPages: data.totalPages,
           isLoading: false,
+          isRetrying: false,
+          error: null,
         }))
       }
     },
@@ -110,6 +125,7 @@ export function useProducts(initialFilters: ProductFilters = {}) {
     page: state.page,
     totalPages: state.totalPages,
     isLoading: state.isLoading,
+    isRetrying: state.isRetrying,
     error: state.error,
     categories: state.categories,
     filters,
