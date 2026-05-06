@@ -51,7 +51,7 @@ export async function getHeroSlides(): Promise<{ slides: HeroSlide[]; error: str
 
   if (error) return { slides: [], error: error.message }
 
-  const slides: HeroSlide[] = (data ?? []).map(s => ({
+  const slides: HeroSlide[] = ((data ?? []) as any[]).map(s => ({
     id: s.id,
     titulo: s.titulo,
     subtitulo: s.subtitulo,
@@ -76,6 +76,7 @@ export async function criarHeroSlide(payload: {
   imagemUrl: string
   ordem: number
 }): Promise<{ error: string | null }> {
+  // @ts-ignore — tabela não está no tipo gerado do Supabase
   const { error } = await supabase.from('hero_slides').insert({
     titulo: payload.titulo,
     subtitulo: payload.subtitulo,
@@ -163,7 +164,7 @@ export async function getConteudoPorSecao(
 
     if (error) return { itens: [], mapa: {}, error: error.message }
 
-    const itens: ConteudoItem[] = (data ?? []).map(c => ({
+    const itens: ConteudoItem[] = ((data ?? []) as any[]).map(c => ({
       id: c.id,
       chave: c.chave,
       valor: c.valor,
@@ -212,7 +213,7 @@ export async function getSobreGaleria(): Promise<{ imagens: SobreImagem[]; error
 
   if (error) return { imagens: [], error: error.message }
 
-  const imagens: SobreImagem[] = (data ?? []).map(i => ({
+  const imagens: SobreImagem[] = ((data ?? []) as any[]).map(i => ({
     id: i.id,
     url: i.url,
     alt: i.alt,
@@ -230,6 +231,7 @@ export async function adicionarSobreImagem(
 ): Promise<{ error: string | null }> {
   const { error } = await supabase
     .from('sobre_galeria')
+    // @ts-ignore — tabela não está no tipo gerado do Supabase
     .insert({ url, alt, ordem })
   return { error: error?.message ?? null }
 }

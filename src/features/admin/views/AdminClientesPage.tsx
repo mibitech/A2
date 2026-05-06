@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useClientesAdmin } from '../controllers/useClientesAdmin'
 import type { ClienteAdmin, PedidoResumo } from '../controllers/useClientesAdmin'
 import { enviarCampanha, getCampanhas } from '../services/campanhas.admin.service'
@@ -7,7 +7,7 @@ import Pagination from '@components/ui/Pagination'
 
 const roleLabel: Record<string, string> = {
   cliente: 'Cliente',
-  funcionario: 'Funcionário',
+  funcionario: 'FuncionÃ¡rio',
   admin: 'Admin',
 }
 
@@ -46,7 +46,7 @@ interface PerfilModalProps {
   onUpdateTags: (id: string, tags: string[]) => Promise<{ success: boolean; error?: string }>
 }
 
-const TAGS_SUGERIDAS = ['vip', 'atacado', 'recorrente', 'inativo', 'prospect', 'prioritário']
+const TAGS_SUGERIDAS = ['vip', 'atacado', 'recorrente', 'inativo', 'prospect', 'prioritÃ¡rio']
 
 function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags }: PerfilModalProps) {
   const [pedidos, setPedidos] = useState<PedidoResumo[] | null>(null)
@@ -118,7 +118,7 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags 
               {(cliente.nomeCompleto || cliente.email).charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="font-semibold text-neutral-800">{cliente.nomeCompleto || '—'}</p>
+              <p className="font-semibold text-neutral-800">{cliente.nomeCompleto || 'â€”'}</p>
               <p className="text-xs text-neutral-400">{cliente.email}</p>
             </div>
           </div>
@@ -137,12 +137,12 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags 
               onClick={() => handleAba(aba)}
               className={`flex-1 py-2.5 text-sm font-medium transition-colors ${abaAtiva === aba ? 'border-b-2 border-brand text-brand' : 'text-neutral-500 hover:text-neutral-700'}`}
             >
-              {aba === 'info' ? 'Informações' : 'Pedidos'}
+              {aba === 'info' ? 'InformaÃ§Ãµes' : 'Pedidos'}
             </button>
           ))}
         </div>
 
-        {/* Conteúdo */}
+        {/* ConteÃºdo */}
         <div className="p-6">
           {feedback && (
             <div className={`mb-4 rounded-lg px-3 py-2 text-sm ${feedback.startsWith('Erro') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
@@ -155,11 +155,11 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags 
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-neutral-50 p-3">
                   <p className="text-xs text-neutral-400">Telefone</p>
-                  <p className="mt-0.5 text-sm font-medium text-neutral-700">{cliente.telefone || '—'}</p>
+                  <p className="mt-0.5 text-sm font-medium text-neutral-700">{cliente.telefone || 'â€”'}</p>
                 </div>
                 <div className="rounded-lg bg-neutral-50 p-3">
                   <p className="text-xs text-neutral-400">CPF/CNPJ</p>
-                  <p className="mt-0.5 text-sm font-medium text-neutral-700">{cliente.cpfCnpj || '—'}</p>
+                  <p className="mt-0.5 text-sm font-medium text-neutral-700">{cliente.cpfCnpj || 'â€”'}</p>
                 </div>
                 <div className="rounded-lg bg-neutral-50 p-3">
                   <p className="text-xs text-neutral-400">Tipo de Pessoa</p>
@@ -177,7 +177,7 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags 
               <div className="rounded-lg border border-neutral-200 p-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-neutral-400">Nível de Acesso</p>
+                    <p className="text-xs text-neutral-400">NÃ­vel de Acesso</p>
                     {editandoRole ? (
                       <select
                         value={novoRole}
@@ -185,7 +185,7 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags 
                         className="mt-1 rounded border border-neutral-300 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-brand"
                       >
                         <option value="cliente">Cliente</option>
-                        <option value="funcionario">Funcionário</option>
+                        <option value="funcionario">FuncionÃ¡rio</option>
                         <option value="admin">Admin</option>
                       </select>
                     ) : (
@@ -213,10 +213,10 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags 
                 </div>
               </div>
 
-              {/* Tags de segmentação */}
+              {/* Tags de segmentaÃ§Ã£o */}
               <div className="rounded-lg border border-neutral-200 p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs text-neutral-400">Tags de Segmentação</p>
+                  <p className="text-xs text-neutral-400">Tags de SegmentaÃ§Ã£o</p>
                   <button
                     onClick={handleSalvarTags}
                     disabled={salvandoTags}
@@ -239,7 +239,7 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags 
                         className="ml-0.5 text-brand hover:text-red-500 leading-none"
                         aria-label={`Remover ${tag}`}
                       >
-                        ×
+                        Ã—
                       </button>
                     </span>
                   ))}
@@ -263,7 +263,7 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags 
                   </button>
                 </div>
 
-                {/* Sugestões */}
+                {/* SugestÃµes */}
                 <div className="flex flex-wrap gap-1 mt-2">
                   {TAGS_SUGERIDAS.filter(t => !tags.includes(t)).map(t => (
                     <button
@@ -334,7 +334,7 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags 
 }
 
 // =====================================================
-// CABEÇALHO ORDENÁVEL
+// CABEÃ‡ALHO ORDENÃVEL
 // =====================================================
 type SortDir = 'asc' | 'desc'
 type SortKeyClientes = 'nome' | 'role' | 'cadastro'
@@ -352,7 +352,7 @@ function ThSort({ label, col, current, dir, onSort, align = 'left' }: {
       <span className="inline-flex items-center gap-1">
         {label}
         <span className={`text-xs ${active ? 'text-brand' : 'text-neutral-300'}`}>
-          {active ? (dir === 'asc' ? '↑' : '↓') : '↕'}
+          {active ? (dir === 'asc' ? 'â†‘' : 'â†“') : 'â†•'}
         </span>
       </span>
     </th>
@@ -362,12 +362,12 @@ function ThSort({ label, col, current, dir, onSort, align = 'left' }: {
 // =====================================================
 // MODAL DE NOVA CAMPANHA
 // =====================================================
-const TAGS_CAMPANHA = ['vip', 'atacado', 'recorrente', 'inativo', 'prospect', 'prioritário']
+const TAGS_CAMPANHA = ['vip', 'atacado', 'recorrente', 'inativo', 'prospect', 'prioritÃ¡rio']
 
 function ModalCampanha({ onClose, onSent }: { onClose: () => void; onSent: () => void }) {
   const [titulo, setTitulo] = useState('')
   const [assunto, setAssunto] = useState('')
-  const [html, setHtml] = useState('<p>Olá {{nome}},</p>\n\n<p>Mensagem aqui.</p>\n\n<p>Atenciosamente,<br>A2 Brasil Supplies</p>')
+  const [html, setHtml] = useState('<p>OlÃ¡ {{nome}},</p>\n\n<p>Mensagem aqui.</p>\n\n<p>Atenciosamente,<br>A2 Brasil Supplies</p>')
   const [segmento, setSegmento] = useState<SegmentoCampanha>('todos')
   const [tag, setTag] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -412,8 +412,8 @@ function ModalCampanha({ onClose, onSent }: { onClose: () => void; onSent: () =>
             <>
               {erro && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{erro}</div>}
               <div>
-                <label className="mb-1 block text-sm font-medium text-neutral-700">Título interno</label>
-                <input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex: Promoção Maio 2026"
+                <label className="mb-1 block text-sm font-medium text-neutral-700">TÃ­tulo interno</label>
+                <input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Ex: PromoÃ§Ã£o Maio 2026"
                   className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"/>
               </div>
               <div>
@@ -423,11 +423,11 @@ function ModalCampanha({ onClose, onSent }: { onClose: () => void; onSent: () =>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-neutral-700">
-                  Destinatários
+                  DestinatÃ¡rios
                 </label>
                 <select value={segmento} onChange={e => setSegmento(e.target.value as SegmentoCampanha)}
                   className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand">
-                  <option value="todos">Todos os usuários</option>
+                  <option value="todos">Todos os usuÃ¡rios</option>
                   <option value="clientes">Somente clientes</option>
                   <option value="por_tag">Por tag</option>
                 </select>
@@ -444,7 +444,7 @@ function ModalCampanha({ onClose, onSent }: { onClose: () => void; onSent: () =>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium text-neutral-700">
-                  Conteúdo HTML <span className="font-normal text-neutral-400">(use {'{{nome}}'} para personalizar)</span>
+                  ConteÃºdo HTML <span className="font-normal text-neutral-400">(use {'{{nome}}'} para personalizar)</span>
                 </label>
                 <textarea value={html} onChange={e => setHtml(e.target.value)} rows={8}
                   className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand"/>
@@ -469,7 +469,7 @@ function ModalCampanha({ onClose, onSent }: { onClose: () => void; onSent: () =>
 }
 
 // =====================================================
-// PÁGINA PRINCIPAL
+// PÃGINA PRINCIPAL
 // =====================================================
 export default function AdminClientesPage() {
   const { clientes, isLoading, error, reload, getPedidos, updateRole, updateTags } = useClientesAdmin()
@@ -528,12 +528,12 @@ export default function AdminClientesPage() {
         <div>
           <h1 className="text-2xl font-bold text-neutral-800">CRM</h1>
           <p className="mt-0.5 text-sm text-neutral-500">
-            {clientes.length} usuários · {totalClientes} clientes · {totalFuncionarios} funcionários · {totalAdmins} admins
+            {clientes.length} usuÃ¡rios Â· {totalClientes} clientes Â· {totalFuncionarios} funcionÃ¡rios Â· {totalAdmins} admins
           </p>
         </div>
         <div className="flex gap-2">
           {abaAtiva === 'clientes' && (
-            <button onClick={reload} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors">
+            <button onClick={() => reload()} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
@@ -576,7 +576,7 @@ export default function AdminClientesPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-neutral-200 bg-neutral-50">
-                    <th className="px-4 py-3 text-left font-medium text-neutral-600">Título</th>
+                    <th className="px-4 py-3 text-left font-medium text-neutral-600">TÃ­tulo</th>
                     <th className="px-4 py-3 text-left font-medium text-neutral-600">Segmento</th>
                     <th className="px-4 py-3 text-center font-medium text-neutral-600">Enviados</th>
                     <th className="px-4 py-3 text-center font-medium text-neutral-600">Status</th>
@@ -633,7 +633,7 @@ export default function AdminClientesPage() {
         >
           <option value="todos">Todos</option>
           <option value="cliente">Clientes</option>
-          <option value="funcionario">Funcionários</option>
+          <option value="funcionario">FuncionÃ¡rios</option>
           <option value="admin">Admins</option>
         </select>
       </div>
@@ -647,14 +647,14 @@ export default function AdminClientesPage() {
         <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700">{error}</div>
       ) : clientesFiltrados.length === 0 ? (
         <div className="rounded-xl border-2 border-dashed border-neutral-200 p-12 text-center">
-          <p className="text-sm text-neutral-400">Nenhum usuário encontrado</p>
+          <p className="text-sm text-neutral-400">Nenhum usuÃ¡rio encontrado</p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50">
-                <ThSort label="Usuário" col="nome" current={sortKey} dir={sortDir} onSort={toggleSort} align="left" />
+                <ThSort label="UsuÃ¡rio" col="nome" current={sortKey} dir={sortDir} onSort={toggleSort} align="left" />
                 <th className="px-4 py-3 text-left font-medium text-neutral-600">Contato</th>
                 <th className="px-4 py-3 text-center font-medium text-neutral-600">Tipo</th>
                 <ThSort label="Acesso" col="role" current={sortKey} dir={sortDir} onSort={toggleSort} align="center" />
@@ -671,13 +671,13 @@ export default function AdminClientesPage() {
                         {(c.nomeCompleto || c.email).charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-medium text-neutral-800">{c.nomeCompleto || '—'}</p>
+                        <p className="font-medium text-neutral-800">{c.nomeCompleto || 'â€”'}</p>
                         <p className="text-xs text-neutral-400">{c.email}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-neutral-600">
-                    {c.telefone || <span className="text-neutral-300">—</span>}
+                    {c.telefone || <span className="text-neutral-300">â€”</span>}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className="text-xs text-neutral-500 capitalize">{c.tipoPessoa}</span>

@@ -84,6 +84,7 @@ export async function createProduto(
   try {
     const { data: row, error } = await supabase
       .from('produtos')
+      // @ts-ignore — tipo gerado não reflete schema atual
       .insert(data)
       .select()
       .single()
@@ -184,6 +185,7 @@ export async function registrarMovimentacao(data: {
         : data.estoqueAnterior + data.quantidade // ajuste pode ser + ou -
 
   try {
+    // @ts-ignore — tabela não está no tipo gerado do Supabase
     const { error } = await supabase.from('movimentacoes_estoque').insert({
       produto_id: data.produtoId,
       usuario_id: data.usuarioId,

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../contexts/CartContext'
 import { Button, Card } from '@components/ui'
@@ -18,15 +18,15 @@ interface OpcaoFrete {
 function calcularFreteMock(cep: string, subtotal: number): OpcaoFrete[] {
   const prefix = parseInt(cep.replace(/\D/g, '').slice(0, 2))
 
-  // Frete grátis acima de R$ 500
+  // Frete grÃ¡tis acima de R$ 500
   const gratis = subtotal >= 500
 
-  // Regiões aproximadas por faixa de CEP
+  // RegiÃµes aproximadas por faixa de CEP
   let pac: number
   let sedex: number
 
   if (prefix >= 1 && prefix <= 19) {
-    // São Paulo capital / ABCD
+    // SÃ£o Paulo capital / ABCD
     pac = gratis ? 0 : 14.9
     sedex = gratis ? 0 : 29.9
   } else if (prefix >= 20 && prefix <= 28) {
@@ -46,11 +46,11 @@ function calcularFreteMock(cep: string, subtotal: number): OpcaoFrete[] {
     pac = gratis ? 0 : 32.9
     sedex = gratis ? 0 : 58.9
   } else if (prefix >= 66 && prefix <= 69) {
-    // Pará / Amazônia
+    // ParÃ¡ / AmazÃ´nia
     pac = gratis ? 0 : 38.9
     sedex = gratis ? 0 : 68.9
   } else if (prefix >= 70 && prefix <= 76) {
-    // Brasília / GO
+    // BrasÃ­lia / GO
     pac = gratis ? 0 : 24.9
     sedex = gratis ? 0 : 44.9
   } else if (prefix >= 77 && prefix <= 79) {
@@ -58,7 +58,7 @@ function calcularFreteMock(cep: string, subtotal: number): OpcaoFrete[] {
     pac = gratis ? 0 : 29.9
     sedex = gratis ? 0 : 52.9
   } else if (prefix >= 80 && prefix <= 87) {
-    // Paraná
+    // ParanÃ¡
     pac = gratis ? 0 : 16.9
     sedex = gratis ? 0 : 32.9
   } else if (prefix >= 88 && prefix <= 89) {
@@ -75,13 +75,13 @@ function calcularFreteMock(cep: string, subtotal: number): OpcaoFrete[] {
     {
       id: 'pac',
       nome: 'PAC (Correios)',
-      prazo: '5 a 8 dias úteis',
+      prazo: '5 a 8 dias Ãºteis',
       valor: pac,
     },
     {
       id: 'sedex',
       nome: 'SEDEX (Correios)',
-      prazo: '2 a 3 dias úteis',
+      prazo: '2 a 3 dias Ãºteis',
       valor: sedex,
     },
   ]
@@ -90,7 +90,7 @@ function calcularFreteMock(cep: string, subtotal: number): OpcaoFrete[] {
 }
 
 // =====================================================
-// COMPONENTE: CÁLCULO DE FRETE
+// COMPONENTE: CÃLCULO DE FRETE
 // =====================================================
 
 interface CalcFreteProps {
@@ -113,22 +113,22 @@ function CalcFrete({ subtotal, onFreteSelect, freteSelecionado }: CalcFreteProps
 
   async function handleCalcular() {
     const nums = cep.replace(/\D/g, '')
-    if (nums.length < 8) { setErro('Informe um CEP válido com 8 dígitos'); return }
+    if (nums.length < 8) { setErro('Informe um CEP vÃ¡lido com 8 dÃ­gitos'); return }
     setErro(null)
     setCalculando(true)
     onFreteSelect(null)
-    // Simula latência de API
+    // Simula latÃªncia de API
     await new Promise(r => setTimeout(r, 800))
     const resultado = calcularFreteMock(nums, subtotal)
     setOpcoes(resultado)
     // Seleciona automaticamente o primeiro (mais barato)
-    if (resultado.length > 0) onFreteSelect(resultado[0])
+    if (resultado.length > 0) onFreteSelect(resultado[0] ?? null)
     setCalculando(false)
   }
 
   const fmtBRL = (v: number) =>
     v === 0
-      ? 'Grátis'
+      ? 'GrÃ¡tis'
       : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
 
   return (
@@ -162,7 +162,7 @@ function CalcFrete({ subtotal, onFreteSelect, freteSelecionado }: CalcFreteProps
 
       {subtotal >= 500 && (
         <p className="mt-1.5 text-xs text-green-600 font-medium">
-          Parabéns! Seu pedido tem frete grátis.
+          ParabÃ©ns! Seu pedido tem frete grÃ¡tis.
         </p>
       )}
 
@@ -204,7 +204,7 @@ function CalcFrete({ subtotal, onFreteSelect, freteSelecionado }: CalcFreteProps
 }
 
 // =====================================================
-// PÁGINA PRINCIPAL
+// PÃGINA PRINCIPAL
 // =====================================================
 
 function CartPage() {
@@ -238,7 +238,7 @@ function CartPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            <h2 className="mb-2 text-xl font-bold text-neutral-900">Seu carrinho está vazio</h2>
+            <h2 className="mb-2 text-xl font-bold text-neutral-900">Seu carrinho estÃ¡ vazio</h2>
             <p className="mb-6 text-neutral-600">Adicione produtos para continuar comprando</p>
             <Link to="/produtos" className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-hover hover:shadow-md">
               Ver Produtos
@@ -348,7 +348,7 @@ function CartPage() {
                     <span className={`font-medium ${freteSelecionado ? freteSelecionado.valor === 0 ? 'text-green-600' : 'text-neutral-800' : 'text-neutral-400'}`}>
                       {freteSelecionado
                         ? freteSelecionado.valor === 0
-                          ? 'Grátis'
+                          ? 'GrÃ¡tis'
                           : formatarPreco(freteSelecionado.valor)
                         : 'Informe o CEP'}
                     </span>
@@ -377,7 +377,7 @@ function CartPage() {
                   </p>
                 )}
 
-                {/* Cálculo de frete */}
+                {/* CÃ¡lculo de frete */}
                 <CalcFrete
                   subtotal={total}
                   freteSelecionado={freteSelecionado}

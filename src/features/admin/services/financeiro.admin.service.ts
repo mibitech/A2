@@ -64,6 +64,7 @@ export async function criarCategoria(payload: {
   try {
     const { data, error } = await supabase
       .from('categorias_caixa')
+      // @ts-ignore — tabela não está no tipo gerado do Supabase
       .insert({ nome: payload.nome.trim().toLowerCase(), tipo: payload.tipo })
       .select()
       .single()
@@ -160,6 +161,7 @@ export async function criarLancamento(payload: {
   criadoPor?: string
 }): Promise<{ error: string | null }> {
   try {
+    // @ts-ignore — tabela não está no tipo gerado do Supabase
     const { error } = await supabase.from('lancamentos_caixa').insert({
       tipo: payload.tipo,
       categoria: payload.categoria,
