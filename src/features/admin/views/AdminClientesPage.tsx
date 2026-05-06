@@ -364,12 +364,18 @@ function ThSort({ label, col, current, dir, onSort, align = 'left' }: {
 // =====================================================
 const TAGS_CAMPANHA = ['vip', 'atacado', 'recorrente', 'inativo', 'prospect', 'prioritário']
 
-function ModalCampanha({ onClose, onSent }: { onClose: () => void; onSent: () => void }) {
-  const [titulo, setTitulo] = useState('')
-  const [assunto, setAssunto] = useState('')
-  const [html, setHtml] = useState('<p>Olá {{nome}},</p>\n\n<p>Mensagem aqui.</p>\n\n<p>Atenciosamente,<br>A2 Brasil Supplies</p>')
-  const [segmento, setSegmento] = useState<SegmentoCampanha>('todos')
-  const [tag, setTag] = useState('')
+interface ModalCampanhaProps {
+  onClose: () => void
+  onSent: () => void
+  initialData?: Pick<Campanha, 'titulo' | 'assunto' | 'conteudoHtml' | 'segmento' | 'tagFiltro'>
+}
+
+function ModalCampanha({ onClose, onSent, initialData }: ModalCampanhaProps) {
+  const [titulo, setTitulo] = useState(initialData?.titulo ?? '')
+  const [assunto, setAssunto] = useState(initialData?.assunto ?? '')
+  const [html, setHtml] = useState(initialData?.conteudoHtml ?? '<p>Olá {{nome}},</p>\n\n<p>Mensagem aqui.</p>\n\n<p>Atenciosamente,<br>A2 Brasil Supplies</p>')
+  const [segmento, setSegmento] = useState<SegmentoCampanha>(initialData?.segmento ?? 'todos')
+  const [tag, setTag] = useState(initialData?.tagFiltro ?? '')
   const [enviando, setEnviando] = useState(false)
   const [resultado, setResultado] = useState<{ enviados: number } | null>(null)
   const [erro, setErro] = useState<string | null>(null)
@@ -389,7 +395,7 @@ function ModalCampanha({ onClose, onSent }: { onClose: () => void; onSent: () =>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
-          <h2 className="font-bold text-neutral-900">Nova Campanha de E-mail</h2>
+          <h2 className="font-bold text-neutral-900">{initialData ? 'Reenviar Campanha' : 'Nova Campanha de E-mail'}</h2>
           <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-neutral-100 text-neutral-400">
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/>
@@ -481,6 +487,7 @@ export default function AdminClientesPage() {
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [page, setPage] = useState(1)
   const [abaAtiva, setAbaAtiva] = useState<'clientes' | 'campanhas'>('clientes')
+  const [campanhaReenvio, setCampanhaReenvio] = useState<Campanha | null>(null)
   const [showCampanha, setShowCampanha] = useState(false)
   const [campanhas, setCampanhas] = useState<Campanha[]>([])
   const [loadingCampanhas, setLoadingCampanhas] = useState(false)
@@ -581,6 +588,7 @@ export default function AdminClientesPage() {
                     <th className="px-4 py-3 text-center font-medium text-neutral-600">Enviados</th>
                     <th className="px-4 py-3 text-center font-medium text-neutral-600">Status</th>
                     <th className="px-4 py-3 text-right font-medium text-neutral-600">Data</th>
+                    <th className="px-4 py-3 text-center font-medium text-neutral-600">Ação</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100">
@@ -604,6 +612,18 @@ export default function AdminClientesPage() {
                       </td>
                       <td className="px-4 py-3 text-right text-xs text-neutral-400">
                         {new Date(c.createdAt).toLocaleDateString('pt-BR')}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          onClick={() => { setCampanhaReenvio(c); setShowCampanha(true) }}
+                          title="Reenviar esta campanha"
+                          className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 px-2.5 py-1 text-xs font-medium text-neutral-600 hover:border-brand hover:text-brand transition-colors"
+                        >
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                          </svg>
+                          Reenviar
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -739,8 +759,9 @@ export default function AdminClientesPage() {
       {/* Modal Nova Campanha */}
       {showCampanha && (
         <ModalCampanha
-          onClose={() => setShowCampanha(false)}
-          onSent={() => { setAbaAtiva('campanhas'); carregarCampanhas() }}
+          onClose={() => { setShowCampanha(false); setCampanhaReenvio(null) }}
+          onSent={() => { setAbaAtiva('campanhas'); carregarCampanhas(); setCampanhaReenvio(null) }}
+          initialData={campanhaReenvio ?? undefined}
         />
       )}
     </div>
