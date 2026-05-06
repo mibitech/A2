@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import {
   useHeroSlides,
   useConteudoSecao,
@@ -11,7 +11,7 @@ type Aba = 'carrossel' | 'sobre' | 'contatos' | 'institucional' | 'whatsapp'
 
 const ABAS: { id: Aba; label: string }[] = [
   { id: 'carrossel', label: 'Carrossel' },
-  { id: 'sobre', label: 'Sobre NÃ³s' },
+  { id: 'sobre', label: 'Sobre Nós' },
   { id: 'contatos', label: 'Contatos' },
   { id: 'institucional', label: 'Institucional' },
   { id: 'whatsapp', label: 'WhatsApp' },
@@ -136,7 +136,7 @@ function AbaCarrossel() {
                     )}
                     <p className="font-semibold text-neutral-800 truncate">{s.titulo}</p>
                     <p className="text-sm text-neutral-500 truncate">{s.subtitulo}</p>
-                    <p className="text-xs text-neutral-400 mt-1">CTA: {s.ctaTexto} â†’ {s.ctaUrl}</p>
+                    <p className="text-xs text-neutral-400 mt-1">CTA: {s.ctaTexto} → {s.ctaUrl}</p>
                   </div>
                   <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${s.ativo ? 'bg-green-100 text-green-700' : 'bg-neutral-100 text-neutral-500'}`}>
                     {s.ativo ? 'Ativo' : 'Inativo'}
@@ -192,10 +192,10 @@ function SlideModal({ slide, onClose, onSalvar }: SlideModalProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!titulo.trim()) { setErro('TÃ­tulo obrigatÃ³rio'); return }
-    if (!imagemUrl.trim()) { setErro('FaÃ§a upload de uma imagem'); return }
+    if (!titulo.trim()) { setErro('Título obrigatório'); return }
+    if (!imagemUrl.trim()) { setErro('Faça upload de uma imagem'); return }
     setSalvando(true)
-    const r = await onSalvar({ titulo, subtitulo, badge: badge || undefined, ctaTexto, ctaUrl, imagemUrl })
+    const r = await onSalvar({ titulo, subtitulo, badge: badge || null, ctaTexto, ctaUrl, imagemUrl })
     setSalvando(false)
     if (r.success) onClose()
     else setErro(r.error ?? 'Erro ao salvar')
@@ -219,7 +219,7 @@ function SlideModal({ slide, onClose, onSalvar }: SlideModalProps) {
             {imagemUrl && (
               <img src={imagemUrl} alt="Preview" className="mb-2 h-32 w-full rounded-lg object-cover" />
             )}
-            <UploadBtn pasta="hero" onUpload={setImagemUrl} label="Upload de imagem (1200Ã—600 recomendado)" />
+            <UploadBtn pasta="hero" onUpload={setImagemUrl} label="Upload de imagem (1200×600 recomendado)" />
             {!imagemUrl && (
               <div className="mt-2">
                 <p className="text-xs text-neutral-400 mb-1">Ou cole uma URL:</p>
@@ -232,31 +232,31 @@ function SlideModal({ slide, onClose, onSalvar }: SlideModalProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-neutral-500">TÃ­tulo *</label>
+              <label className="mb-1 block text-xs font-medium text-neutral-500">Título *</label>
               <input value={titulo} onChange={e => setTitulo(e.target.value)}
                 className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand" />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-neutral-500">Badge</label>
-              <input value={badge} onChange={e => setBadge(e.target.value)} placeholder="Ex: FRETE GRÃTIS"
+              <input value={badge} onChange={e => setBadge(e.target.value)} placeholder="Ex: FRETE GRÁTIS"
                 className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand" />
             </div>
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-neutral-500">SubtÃ­tulo</label>
+            <label className="mb-1 block text-xs font-medium text-neutral-500">Subtítulo</label>
             <input value={subtitulo} onChange={e => setSubtitulo(e.target.value)}
               className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-neutral-500">Texto do BotÃ£o</label>
+              <label className="mb-1 block text-xs font-medium text-neutral-500">Texto do Botão</label>
               <input value={ctaTexto} onChange={e => setCtaTexto(e.target.value)}
                 className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand" />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-neutral-500">URL do BotÃ£o</label>
+              <label className="mb-1 block text-xs font-medium text-neutral-500">URL do Botão</label>
               <input value={ctaUrl} onChange={e => setCtaUrl(e.target.value)}
                 className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand" />
             </div>
@@ -281,7 +281,7 @@ function SlideModal({ slide, onClose, onSalvar }: SlideModalProps) {
 }
 
 // =====================================================
-// ABA CONTEÃšDO GENÃ‰RICA (Contatos / Sobre / Institucional)
+// ABA CONTEÚDO GENÉRICA (Contatos / Sobre / Institucional)
 // =====================================================
 interface AbaConteudoProps {
   secao: 'contatos' | 'sobre' | 'institucional' | 'whatsapp'
@@ -352,7 +352,7 @@ function AbaConteudo({ secao }: AbaConteudoProps) {
       <div className="pt-2">
         <button type="submit" disabled={salvando}
           className="rounded-lg bg-brand px-6 py-2 text-sm font-medium text-white hover:bg-brand-dark disabled:opacity-50">
-          {salvando ? 'Salvando...' : 'Salvar alteraÃ§Ãµes'}
+          {salvando ? 'Salvando...' : 'Salvar alterações'}
         </button>
       </div>
     </form>
@@ -360,7 +360,7 @@ function AbaConteudo({ secao }: AbaConteudoProps) {
 }
 
 // =====================================================
-// ABA: SOBRE NÃ“S (conteÃºdo + galeria)
+// ABA: SOBRE NÓS (conteúdo + galeria)
 // =====================================================
 function AbaSobre() {
   const galeria = useSobreGaleria()
@@ -374,19 +374,19 @@ function AbaSobre() {
     <div className="space-y-8">
       {/* Textos */}
       <div>
-        <h3 className="mb-4 text-sm font-semibold text-neutral-700">Textos e InformaÃ§Ãµes</h3>
+        <h3 className="mb-4 text-sm font-semibold text-neutral-700">Textos e Informações</h3>
         <AbaConteudo secao="sobre" />
       </div>
 
       {/* Galeria de imagens */}
       <div>
         <h3 className="mb-3 text-sm font-semibold text-neutral-700">Galeria de Imagens</h3>
-        <p className="mb-4 text-xs text-neutral-400">Imagens exibidas na pÃ¡gina Sobre NÃ³s.</p>
+        <p className="mb-4 text-xs text-neutral-400">Imagens exibidas na página Sobre Nós.</p>
 
         {/* Upload */}
         <div className="mb-4 flex items-end gap-3 flex-wrap">
           <div className="flex-1 min-w-[180px]">
-            <label className="mb-1 block text-xs font-medium text-neutral-500">DescriÃ§Ã£o (alt)</label>
+            <label className="mb-1 block text-xs font-medium text-neutral-500">Descrição (alt)</label>
             <input value={altInput} onChange={e => setAltInput(e.target.value)}
               placeholder="Ex: Nossa equipe"
               className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand" />
@@ -490,7 +490,7 @@ function AbaWhatsApp() {
     <form onSubmit={handleSalvar} className="space-y-6">
       {/* Preview */}
       <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4">
-        <p className="mb-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">Preview do botÃ£o</p>
+        <p className="mb-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">Preview do botão</p>
         <div className="flex items-center gap-3">
           <span className="rounded-full bg-white px-4 py-2 text-sm font-medium text-neutral-800 shadow-md">
             {label}
@@ -508,7 +508,7 @@ function AbaWhatsApp() {
             rel="noopener noreferrer"
             className="mt-2 inline-block text-xs text-brand hover:underline"
           >
-            Testar link â†’
+            Testar link →
           </a>
         )}
       </div>
@@ -516,8 +516,8 @@ function AbaWhatsApp() {
       {/* Toggle ativo */}
       <div className="flex items-center justify-between rounded-xl border border-neutral-200 bg-white p-4">
         <div>
-          <p className="text-sm font-medium text-neutral-800">Exibir botÃ£o no site</p>
-          <p className="text-xs text-neutral-400 mt-0.5">Quando desativado, o botÃ£o some para os visitantes</p>
+          <p className="text-sm font-medium text-neutral-800">Exibir botão no site</p>
+          <p className="text-xs text-neutral-400 mt-0.5">Quando desativado, o botão some para os visitantes</p>
         </div>
         <button
           type="button"
@@ -548,7 +548,7 @@ function AbaWhatsApp() {
             />
           )}
           {item.chave === 'whatsapp_numero' && (
-            <p className="mt-0.5 text-xs text-neutral-400">Ex: 5511999999999 (55 = Brasil, 11 = DDD, sem espaÃ§os)</p>
+            <p className="mt-0.5 text-xs text-neutral-400">Ex: 5511999999999 (55 = Brasil, 11 = DDD, sem espaços)</p>
           )}
         </div>
       ))}
@@ -562,7 +562,7 @@ function AbaWhatsApp() {
       <div className="pt-2">
         <button type="submit" disabled={salvando}
           className="rounded-lg bg-brand px-6 py-2 text-sm font-medium text-white hover:bg-brand-dark disabled:opacity-50">
-          {salvando ? 'Salvando...' : 'Salvar alteraÃ§Ãµes'}
+          {salvando ? 'Salvando...' : 'Salvar alterações'}
         </button>
       </div>
     </form>
@@ -570,7 +570,7 @@ function AbaWhatsApp() {
 }
 
 // =====================================================
-// PÃGINA PRINCIPAL
+// PÁGINA PRINCIPAL
 // =====================================================
 export default function AdminSitePage() {
   const [aba, setAba] = useState<Aba>('carrossel')
@@ -578,9 +578,9 @@ export default function AdminSitePage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-neutral-800">ConteÃºdo do Site</h1>
+        <h1 className="text-2xl font-bold text-neutral-800">Conteúdo do Site</h1>
         <p className="mt-0.5 text-sm text-neutral-500">
-          Gerencie as informaÃ§Ãµes exibidas no site para os visitantes
+          Gerencie as informações exibidas no site para os visitantes
         </p>
       </div>
 
@@ -601,7 +601,7 @@ export default function AdminSitePage() {
         ))}
       </div>
 
-      {/* ConteÃºdo */}
+      {/* Conteúdo */}
       <div className="max-w-3xl">
         {aba === 'carrossel'     && <AbaCarrossel />}
         {aba === 'sobre'         && <AbaSobre />}

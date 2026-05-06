@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useProdutosAdmin } from '../controllers/useProdutosAdmin'
 import type { ProdutoAdmin } from '../controllers/useProdutosAdmin'
 import Pagination from '@components/ui/Pagination'
@@ -6,7 +6,7 @@ import Pagination from '@components/ui/Pagination'
 const FORNECEDOR_FITACABO = '00000000-0000-0000-0000-000000000001'
 
 // =====================================================
-// FORMULÃRIO DE PRODUTO
+// FORMULÁRIO DE PRODUTO
 // =====================================================
 interface ProdutoFormData {
   nome: string
@@ -76,7 +76,7 @@ function AjusteModal({ produto, onClose, onAjustar }: AjusteModalProps) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
         <h2 className="mb-1 text-lg font-bold text-neutral-800">Ajustar Estoque</h2>
-        <p className="mb-4 text-sm text-neutral-500">{produto.nome} â€” atual: <strong>{produto.estoque}</strong> un.</p>
+        <p className="mb-4 text-sm text-neutral-500">{produto.nome} — atual: <strong>{produto.estoque}</strong> un.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -87,7 +87,7 @@ function AjusteModal({ produto, onClose, onAjustar }: AjusteModalProps) {
               className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
             >
               <option value="entrada">Entrada (adicionar)</option>
-              <option value="saida">SaÃ­da (remover)</option>
+              <option value="saida">Saída (remover)</option>
               <option value="ajuste">Ajuste manual</option>
             </select>
           </div>
@@ -132,7 +132,7 @@ function AjusteModal({ produto, onClose, onAjustar }: AjusteModalProps) {
 }
 
 // =====================================================
-// MODAL DE HISTÃ“RICO
+// MODAL DE HISTÓRICO
 // =====================================================
 interface HistoricoModalProps {
   produto: ProdutoAdmin
@@ -151,7 +151,7 @@ function HistoricoModal({ produto, onClose, getMovimentacoes }: HistoricoModalPr
     })
   })
 
-  const tipoLabel = { entrada: 'Entrada', saida: 'SaÃ­da', ajuste: 'Ajuste' }
+  const tipoLabel = { entrada: 'Entrada', saida: 'Saída', ajuste: 'Ajuste' }
   const tipoColor = { entrada: 'text-green-600', saida: 'text-red-600', ajuste: 'text-blue-600' }
 
   return (
@@ -159,7 +159,7 @@ function HistoricoModal({ produto, onClose, getMovimentacoes }: HistoricoModalPr
       <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
           <div>
-            <h2 className="text-lg font-bold text-neutral-800">HistÃ³rico de Estoque</h2>
+            <h2 className="text-lg font-bold text-neutral-800">Histórico de Estoque</h2>
             <p className="text-sm text-neutral-500">{produto.nome}</p>
           </div>
           <button onClick={onClose} className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 transition-colors">
@@ -173,7 +173,7 @@ function HistoricoModal({ produto, onClose, getMovimentacoes }: HistoricoModalPr
           {loading ? (
             <p className="text-center text-sm text-neutral-400">Carregando...</p>
           ) : movs.length === 0 ? (
-            <p className="text-center text-sm text-neutral-400">Nenhuma movimentaÃ§Ã£o registrada</p>
+            <p className="text-center text-sm text-neutral-400">Nenhuma movimentação registrada</p>
           ) : (
             <div className="space-y-3">
               {movs.map(m => (
@@ -183,7 +183,7 @@ function HistoricoModal({ produto, onClose, getMovimentacoes }: HistoricoModalPr
                       {tipoLabel[m.tipo]}
                     </span>
                     <p className="mt-0.5 text-sm text-neutral-700">
-                      {m.estoqueAnterior} â†’ {m.estoquePosterior} un.
+                      {m.estoqueAnterior} → {m.estoquePosterior} un.
                       <span className="ml-2 font-medium">
                         ({m.tipo === 'saida' ? '-' : '+'}{m.quantidade})
                       </span>
@@ -204,7 +204,7 @@ function HistoricoModal({ produto, onClose, getMovimentacoes }: HistoricoModalPr
 }
 
 // =====================================================
-// MODAL DE FORMULÃRIO (CREATE / EDIT)
+// MODAL DE FORMULÁRIO (CREATE / EDIT)
 // =====================================================
 interface FormModalProps {
   produto: ProdutoAdmin | null
@@ -332,19 +332,19 @@ function FormModal({ produto, onClose, onCreate, onUpdate, uploadImagem }: FormM
             </div>
 
             <div className="col-span-2">
-              <label className="mb-1 block text-sm font-medium text-neutral-700">DescriÃ§Ã£o</label>
+              <label className="mb-1 block text-sm font-medium text-neutral-700">Descrição</label>
               <textarea name="descricao" value={form.descricao} onChange={handleChange} rows={3}
                 className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand" />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-neutral-700">PreÃ§o (R$) *</label>
+              <label className="mb-1 block text-sm font-medium text-neutral-700">Preço (R$) *</label>
               <input name="preco" type="number" step="0.01" min="0" value={form.preco} onChange={handleChange} required
                 className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand" />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-neutral-700">PreÃ§o Promocional (R$)</label>
+              <label className="mb-1 block text-sm font-medium text-neutral-700">Preço Promocional (R$)</label>
               <input name="precoPromocional" type="number" step="0.01" min="0" value={form.precoPromocional} onChange={handleChange}
                 className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand" />
             </div>
@@ -383,7 +383,7 @@ function FormModal({ produto, onClose, onCreate, onUpdate, uploadImagem }: FormM
               <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
                 <input type="checkbox" name="ativo" checked={form.ativo} onChange={handleChange}
                   className="h-4 w-4 rounded border-neutral-300 text-brand focus:ring-brand" />
-                Ativo (visÃ­vel no site)
+                Ativo (visível no site)
               </label>
               <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
                 <input type="checkbox" name="destaque" checked={form.destaque} onChange={handleChange}
@@ -434,7 +434,7 @@ function FormModal({ produto, onClose, onCreate, onUpdate, uploadImagem }: FormM
             </button>
             <button type="submit" disabled={saving}
               className="flex-1 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark transition-colors disabled:opacity-50">
-              {saving ? 'Salvando...' : isEdit ? 'Salvar alteraÃ§Ãµes' : 'Criar produto'}
+              {saving ? 'Salvando...' : isEdit ? 'Salvar alterações' : 'Criar produto'}
             </button>
           </div>
         </form>
@@ -444,7 +444,7 @@ function FormModal({ produto, onClose, onCreate, onUpdate, uploadImagem }: FormM
 }
 
 // =====================================================
-// CABEÃ‡ALHO ORDENÃVEL
+// CABEÇALHO ORDENÁVEL
 // =====================================================
 type SortDir = 'asc' | 'desc'
 type SortKeyEstoque = 'nome' | 'categoria' | 'preco' | 'estoque'
@@ -462,7 +462,7 @@ function ThSort({ label, col, current, dir, onSort, align = 'left' }: {
       <span className="inline-flex items-center gap-1">
         {label}
         <span className={`text-xs ${active ? 'text-brand' : 'text-neutral-300'}`}>
-          {active ? (dir === 'asc' ? 'â†‘' : 'â†“') : 'â†•'}
+          {active ? (dir === 'asc' ? '↑' : '↓') : '↕'}
         </span>
       </span>
     </th>
@@ -470,7 +470,7 @@ function ThSort({ label, col, current, dir, onSort, align = 'left' }: {
 }
 
 // =====================================================
-// PÃGINA PRINCIPAL
+// PÁGINA PRINCIPAL
 // =====================================================
 export default function AdminEstoquePage() {
   const { produtos, isLoading, error, reload, create, update, remove, uploadImagem, ajustarEstoque, getMovimentacoes } = useProdutosAdmin()
@@ -553,10 +553,10 @@ export default function AdminEstoquePage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-800">GestÃ£o de Estoque</h1>
+          <h1 className="text-2xl font-bold text-neutral-800">Gestão de Estoque</h1>
           <p className="mt-0.5 text-sm text-neutral-500">
-            {produtos.length} produtos Â· {ativos} ativos Â· {inativos} inativos
-            {baixoEstoque > 0 && <span className="ml-2 text-amber-600 font-medium">Â· {baixoEstoque} com estoque baixo (&le;5)</span>}
+            {produtos.length} produtos · {ativos} ativos · {inativos} inativos
+            {baixoEstoque > 0 && <span className="ml-2 text-amber-600 font-medium">· {baixoEstoque} com estoque baixo (&le;5)</span>}
           </p>
         </div>
         <button
@@ -620,10 +620,10 @@ export default function AdminEstoquePage() {
               <tr className="border-b border-neutral-200 bg-neutral-50">
                 <ThSort label="Produto" col="nome" current={sortKey} dir={sortDir} onSort={toggleSort} align="left" />
                 <ThSort label="Categoria" col="categoria" current={sortKey} dir={sortDir} onSort={toggleSort} align="left" />
-                <ThSort label="PreÃ§o" col="preco" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
+                <ThSort label="Preço" col="preco" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
                 <ThSort label="Estoque" col="estoque" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
                 <th className="px-4 py-3 text-center font-medium text-neutral-600">Status</th>
-                <th className="px-4 py-3 text-right font-medium text-neutral-600">AÃ§Ãµes</th>
+                <th className="px-4 py-3 text-right font-medium text-neutral-600">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
@@ -677,7 +677,7 @@ export default function AdminEstoquePage() {
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => setModalHistorico(p)}
-                        title="HistÃ³rico de estoque"
+                        title="Histórico de estoque"
                         className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
                       >
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

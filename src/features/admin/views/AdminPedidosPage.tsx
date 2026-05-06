@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { usePedidosAdmin } from '../controllers/usePedidosAdmin'
 import type { PedidoAdmin, ItemPedidoAdmin, StatusPedido } from '../controllers/usePedidosAdmin'
 import { reenviarEmailConfirmacao } from '../services/pedidos.admin.service'
@@ -31,7 +31,7 @@ const STATUS_CARD: Record<StatusPedido, { card: string; count: string; label: st
   cancelado:   { card: 'border-red-200 bg-red-50',        count: 'text-red-700',     label: 'text-red-600' },
 }
 
-// Fluxo lÃ³gico de transiÃ§Ã£o de status
+// Fluxo lógico de transição de status
 const PROXIMOS_STATUS: Record<StatusPedido, StatusPedido[]> = {
   pendente: ['pago', 'cancelado'],
   pago: ['processando', 'cancelado'],
@@ -98,7 +98,7 @@ function DetalheModal({ pedido, onClose, getItens, onUpdateStatus, onUpdateObser
     const result = await onUpdateObservacoes(pedido.id, observacoes)
     setSalvandoObs(false)
     if (result.success) {
-      showFeedback('ObservaÃ§Ã£o salva!', 'ok')
+      showFeedback('Observação salva!', 'ok')
     } else {
       showFeedback('Erro: ' + result.error, 'erro')
     }
@@ -111,7 +111,7 @@ function DetalheModal({ pedido, onClose, getItens, onUpdateStatus, onUpdateObser
     if (error) {
       showFeedback('Erro ao enviar e-mail: ' + error, 'erro')
     } else {
-      showFeedback('E-mail de confirmaÃ§Ã£o reenviado!', 'ok')
+      showFeedback('E-mail de confirmação reenviado!', 'ok')
     }
   }
 
@@ -130,7 +130,7 @@ function DetalheModal({ pedido, onClose, getItens, onUpdateStatus, onUpdateObser
           <div>
             <p className="text-xs text-neutral-400 font-mono">#{pedido.id.slice(0, 8).toUpperCase()}</p>
             <p className="font-semibold text-neutral-800 mt-0.5">
-              {pedido.usuario?.nomeCompleto || pedido.usuario?.email || 'â€”'}
+              {pedido.usuario?.nomeCompleto || pedido.usuario?.email || '—'}
             </p>
             <p className="text-xs text-neutral-400">{pedido.usuario?.email}</p>
           </div>
@@ -141,7 +141,7 @@ function DetalheModal({ pedido, onClose, getItens, onUpdateStatus, onUpdateObser
             <button
               onClick={handleReenviarEmail}
               disabled={enviandoEmail}
-              title="Reenviar e-mail de confirmaÃ§Ã£o ao cliente"
+              title="Reenviar e-mail de confirmação ao cliente"
               className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-brand transition-colors disabled:opacity-50"
             >
               {enviandoEmail ? (
@@ -171,12 +171,12 @@ function DetalheModal({ pedido, onClose, getItens, onUpdateStatus, onUpdateObser
               onClick={() => handleAba(aba)}
               className={`flex-1 py-2.5 text-sm font-medium transition-colors ${abaAtiva === aba ? 'border-b-2 border-brand text-brand' : 'text-neutral-500 hover:text-neutral-700'}`}
             >
-              {aba === 'itens' ? 'Itens' : aba === 'entrega' ? 'Entrega' : 'ObservaÃ§Ãµes'}
+              {aba === 'itens' ? 'Itens' : aba === 'entrega' ? 'Entrega' : 'Observações'}
             </button>
           ))}
         </div>
 
-        {/* ConteÃºdo scrollÃ¡vel */}
+        {/* Conteúdo scrollável */}
         <div className="overflow-y-auto flex-1 p-6">
           {feedback && (
             <div className={`mb-4 rounded-lg px-3 py-2 text-sm ${feedback.tipo === 'ok' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
@@ -203,7 +203,7 @@ function DetalheModal({ pedido, onClose, getItens, onUpdateStatus, onUpdateObser
                         <div className="h-12 w-12 rounded-lg bg-neutral-100 shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-neutral-800 truncate">{item.produto?.nome ?? 'â€”'}</p>
+                        <p className="text-sm font-medium text-neutral-800 truncate">{item.produto?.nome ?? '—'}</p>
                         {item.produto?.sku && <p className="text-xs text-neutral-400">SKU: {item.produto.sku}</p>}
                       </div>
                       <div className="text-right shrink-0">
@@ -248,16 +248,16 @@ function DetalheModal({ pedido, onClose, getItens, onUpdateStatus, onUpdateObser
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: 'DestinatÃ¡rio', value: end.nome },
+                  { label: 'Destinatário', value: end.nome },
                   { label: 'CEP', value: end.cep },
                   { label: 'Logradouro', value: end.logradouro && end.numero ? `${end.logradouro}, ${end.numero}` : end.logradouro },
-                  { label: 'Complemento', value: end.complemento || 'â€”' },
+                  { label: 'Complemento', value: end.complemento || '—' },
                   { label: 'Bairro', value: end.bairro },
                   { label: 'Cidade / UF', value: end.cidade && end.estado ? `${end.cidade} / ${end.estado}` : end.cidade },
                 ].map(({ label, value }) => (
                   <div key={label} className="rounded-lg bg-neutral-50 p-3">
                     <p className="text-xs text-neutral-400">{label}</p>
-                    <p className="mt-0.5 text-sm font-medium text-neutral-700">{value || 'â€”'}</p>
+                    <p className="mt-0.5 text-sm font-medium text-neutral-700">{value || '—'}</p>
                   </div>
                 ))}
               </div>
@@ -272,14 +272,14 @@ function DetalheModal({ pedido, onClose, getItens, onUpdateStatus, onUpdateObser
             </div>
           )}
 
-          {/* Aba ObservaÃ§Ãµes */}
+          {/* Aba Observações */}
           {abaAtiva === 'obs' && (
             <div className="space-y-3">
               <textarea
                 value={observacoes}
                 onChange={e => setObservacoes(e.target.value)}
                 rows={5}
-                placeholder="Adicione observaÃ§Ãµes internas sobre este pedido..."
+                placeholder="Adicione observações internas sobre este pedido..."
                 className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand resize-none"
               />
               <button
@@ -287,16 +287,16 @@ function DetalheModal({ pedido, onClose, getItens, onUpdateStatus, onUpdateObser
                 disabled={salvandoObs}
                 className="w-full rounded-lg bg-brand py-2 text-sm font-medium text-white hover:bg-brand-dark disabled:opacity-50 transition-colors"
               >
-                {salvandoObs ? 'Salvando...' : 'Salvar observaÃ§Ã£o'}
+                {salvandoObs ? 'Salvando...' : 'Salvar observação'}
               </button>
             </div>
           )}
         </div>
 
-        {/* Footer â€” aÃ§Ãµes de status */}
+        {/* Footer — ações de status */}
         {proximos.length > 0 && (
           <div className="border-t border-neutral-200 px-6 py-4 shrink-0">
-            <p className="text-xs text-neutral-400 mb-2">AvanÃ§ar status para:</p>
+            <p className="text-xs text-neutral-400 mb-2">Avançar status para:</p>
             <div className="flex gap-2 flex-wrap">
               {proximos.map(s => (
                 <button
@@ -321,7 +321,7 @@ function DetalheModal({ pedido, onClose, getItens, onUpdateStatus, onUpdateObser
 }
 
 // =====================================================
-// CABEÃ‡ALHO ORDENÃVEL
+// CABEÇALHO ORDENÁVEL
 // =====================================================
 type SortDir = 'asc' | 'desc'
 type SortKeyPedidos = 'data' | 'cliente' | 'status' | 'total'
@@ -339,7 +339,7 @@ function ThSort({ label, col, current, dir, onSort, align = 'left' }: {
       <span className="inline-flex items-center gap-1">
         {label}
         <span className={`text-xs ${active ? 'text-brand' : 'text-neutral-300'}`}>
-          {active ? (dir === 'asc' ? 'â†‘' : 'â†“') : 'â†•'}
+          {active ? (dir === 'asc' ? '↑' : '↓') : '↕'}
         </span>
       </span>
     </th>
@@ -347,7 +347,7 @@ function ThSort({ label, col, current, dir, onSort, align = 'left' }: {
 }
 
 // =====================================================
-// PÃGINA PRINCIPAL
+// PÁGINA PRINCIPAL
 // =====================================================
 export default function AdminPedidosPage() {
   const { pedidos, isLoading, error, reload, getItens, updateStatus, updateObservacoes } = usePedidosAdmin()
@@ -399,7 +399,7 @@ export default function AdminPedidosPage() {
         <div>
           <h1 className="text-2xl font-bold text-neutral-800">Pedidos</h1>
           <p className="mt-0.5 text-sm text-neutral-500">
-            {pedidos.length} pedidos Â· receita {receitaTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            {pedidos.length} pedidos · receita {receitaTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </p>
         </div>
         <button
@@ -436,7 +436,7 @@ export default function AdminPedidosPage() {
       <div className="flex gap-3 mb-4">
         <input
           type="text"
-          placeholder="Buscar por cliente ou nÂº do pedido..."
+          placeholder="Buscar por cliente ou nº do pedido..."
           value={busca}
           onChange={e => { setBusca(e.target.value); setPage(1) }}
           className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
@@ -484,7 +484,7 @@ export default function AdminPedidosPage() {
                     <p className="font-mono text-xs text-neutral-500">#{p.id.slice(0, 8).toUpperCase()}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-medium text-neutral-800">{p.usuario?.nomeCompleto || 'â€”'}</p>
+                    <p className="font-medium text-neutral-800">{p.usuario?.nomeCompleto || '—'}</p>
                     <p className="text-xs text-neutral-400">{p.usuario?.email}</p>
                   </td>
                   <td className="px-4 py-3 text-center">
