@@ -11,10 +11,14 @@ export function usePedidosAdmin() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (tentativa = 1) => {
     setIsLoading(true)
     setError(null)
     const { pedidos: data, error: err } = await service.getAllPedidos()
+    if (err && tentativa === 1) {
+      await new Promise(r => setTimeout(r, 2_000))
+      return load(2)
+    }
     setPedidos(data)
     if (err) setError(err)
     setIsLoading(false)

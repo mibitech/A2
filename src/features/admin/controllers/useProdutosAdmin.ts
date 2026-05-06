@@ -15,10 +15,14 @@ export function useProdutosAdmin() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (tentativa = 1) => {
     setIsLoading(true)
     setError(null)
     const { produtos: data, error: err } = await service.getAllProdutos()
+    if (err && tentativa === 1) {
+      await new Promise(r => setTimeout(r, 2_000))
+      return load(2)
+    }
     setProdutos(data)
     if (err) setError(err)
     setIsLoading(false)

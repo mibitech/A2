@@ -61,7 +61,7 @@ export async function getAllPedidos(): Promise<{ pedidos: PedidoAdmin[]; error: 
           usuario:usuarios(id, email, nome_completo, telefone)
         `)
         .order('created_at', { ascending: false }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 15_000)),
     ]) as {
       data: {
         id: string
@@ -105,7 +105,7 @@ export async function getAllPedidos(): Promise<{ pedidos: PedidoAdmin[]; error: 
     return { pedidos, error: null }
   } catch (err) {
     const msg = err instanceof Error && err.message === 'timeout'
-      ? 'Timeout ao buscar pedidos. Verifique as permissões RLS.'
+      ? 'Banco de dados demorando a responder. Tente novamente em instantes.'
       : 'Erro ao buscar pedidos'
     return { pedidos: [], error: msg }
   }

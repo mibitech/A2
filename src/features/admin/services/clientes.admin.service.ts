@@ -22,7 +22,7 @@ export async function getAllClientes(): Promise<{ clientes: ClienteAdmin[]; erro
         .from('usuarios')
         .select('*')
         .order('created_at', { ascending: false }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 15_000)),
     ]) as { data: { id: string; email: string; nome_completo: string | null; telefone: string | null; cpf_cnpj: string | null; tipo_pessoa: 'fisica' | 'juridica'; role: 'cliente' | 'funcionario' | 'admin'; tags: string[] | null; created_at: string }[] | null; error: { message: string } | null }
 
     if (error) return { clientes: [], error: error.message }
@@ -44,7 +44,7 @@ export async function getAllClientes(): Promise<{ clientes: ClienteAdmin[]; erro
     return { clientes, error: null }
   } catch (err) {
     const msg = err instanceof Error && err.message === 'timeout'
-      ? 'Timeout ao buscar clientes. Verifique as permissões RLS.'
+      ? 'Banco de dados demorando a responder. Tente novamente em instantes.'
       : 'Erro ao buscar clientes'
     return { clientes: [], error: msg }
   }
@@ -68,7 +68,7 @@ export async function getPedidosCliente(
         .select('id, status, total, created_at')
         .eq('usuario_id', usuarioId)
         .order('created_at', { ascending: false }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 15_000)),
     ]) as { data: { id: string; status: string; total: number; created_at: string }[] | null; error: { message: string } | null }
 
     if (error) return { pedidos: [], error: error.message }

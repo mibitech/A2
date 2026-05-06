@@ -64,14 +64,14 @@ export async function getAllProdutos(): Promise<{ produtos: ProdutoAdmin[]; erro
   try {
     const { data, error } = await Promise.race([
       supabase.from('produtos').select('*').order('nome', { ascending: true }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 15_000)),
     ]) as { data: ProdutoRow[] | null; error: { message: string } | null }
 
     if (error) return { produtos: [], error: error.message }
     return { produtos: (data ?? []).map(mapProduto), error: null }
   } catch (err) {
     const msg = err instanceof Error && err.message === 'timeout'
-      ? 'Timeout ao buscar produtos. Verifique as permissões RLS no Supabase.'
+      ? 'Banco de dados demorando a responder. Tente novamente em instantes.'
       : 'Erro ao buscar produtos'
     return { produtos: [], error: msg }
   }

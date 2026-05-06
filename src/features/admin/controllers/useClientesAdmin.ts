@@ -11,10 +11,14 @@ export function useClientesAdmin() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (tentativa = 1) => {
     setIsLoading(true)
     setError(null)
     const { clientes: data, error: err } = await service.getAllClientes()
+    if (err && tentativa === 1) {
+      await new Promise(r => setTimeout(r, 2_000))
+      return load(2)
+    }
     setClientes(data)
     if (err) setError(err)
     setIsLoading(false)

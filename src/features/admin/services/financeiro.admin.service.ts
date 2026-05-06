@@ -124,7 +124,7 @@ export async function getLancamentos(filtros?: {
 
     const { data, error } = await Promise.race([
       query,
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 15_000)),
     ]) as { data: any[] | null; error: { message: string } | null }
 
     if (error) return { lancamentos: [], error: error.message }
@@ -144,7 +144,7 @@ export async function getLancamentos(filtros?: {
     return { lancamentos, error: null }
   } catch (err) {
     const msg = err instanceof Error && err.message === 'timeout'
-      ? 'Timeout ao buscar lançamentos.'
+      ? 'Banco de dados demorando a responder. Tente novamente em instantes.'
       : 'Erro ao buscar lançamentos'
     return { lancamentos: [], error: msg }
   }
