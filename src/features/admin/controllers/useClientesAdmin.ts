@@ -48,6 +48,16 @@ export function useClientesAdmin() {
     return { success: true }
   }, [])
 
+  const updatePerfil = useCallback(async (
+    id: string,
+    dados: { nomeCompleto?: string; telefone?: string; cpfCnpj?: string; tipoPessoa?: 'fisica' | 'juridica' }
+  ) => {
+    const { error: err } = await service.updatePerfilCliente(id, dados)
+    if (err) return { success: false, error: err }
+    setClientes(prev => prev.map(c => c.id === id ? { ...c, ...dados } : c))
+    return { success: true }
+  }, [])
+
   return {
     clientes,
     isLoading,
@@ -56,5 +66,6 @@ export function useClientesAdmin() {
     getPedidos,
     updateRole,
     updateTags,
+    updatePerfil,
   }
 }

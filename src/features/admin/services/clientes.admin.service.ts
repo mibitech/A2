@@ -92,14 +92,56 @@ export async function updateTagsCliente(
   tags: string[]
 ): Promise<{ error: string | null }> {
   try {
-    const { error } = await (supabase.from('usuarios') as any)
+    const { error, count } = await (supabase.from('usuarios') as any)
       .update({ tags })
       .eq('id', id)
+      .select('id', { count: 'exact', head: true })
 
     if (error) return { error: error.message }
+    if (count === 0) return { error: 'Sem permissão para atualizar este perfil' }
     return { error: null }
   } catch {
     return { error: 'Erro ao atualizar tags' }
+  }
+}
+
+// ===== BUSCAR TAGS ÚNICAS DE TODOS OS USUÁRIOS =====
+export async function getTagsUnicas(): Promise<string[]> {
+  try {
+    const { data } = await (supabase.from('usuarios') as any)
+      .select('tags')
+      .not('tags', 'is', null)
+    if (!data) return []
+    const todas = (data as { tags: string[] | null }[])
+      .flatMap(u => u.tags ?? [])
+    return [...new Set(todas)].sort((a, b) => a.localeCompare(b, 'pt-BR'))
+  } catch {
+    return []
+  }
+}
+
+// ===== ATUALIZAR PERFIL DO USUÁRIO =====
+export async function updatePerfilCliente(
+  id: string,
+  dados: { nomeCompleto?: string; telefone?: string; cpfCnpj?: string; tipoPessoa?: 'fisica' | 'juridica' }
+): Promise<{ error: string | null }> {
+  try {
+    const payload: Record<string, unknown> = {}
+    if (dados.nomeCompleto !== undefined) payload.nome_completo = dados.nomeCompleto || null
+    if (dados.telefone !== undefined) payload.telefone = dados.telefone || null
+    if (dados.cpfCnpj !== undefined) payload.cpf_cnpj = dados.cpfCnpj || null
+    if (dados.tipoPessoa !== undefined) payload.tipo_pessoa = dados.tipoPessoa
+
+    const { error, count } = await (supabase.from('usuarios') as any)
+      .update(payload)
+      .eq('id', id)
+      .select('id', { count: 'exact', head: true })
+
+    if (error) return { error: error.message }
+    if (count === 0) return { error: 'Sem permissão para atualizar este perfil' }
+    return { error: null }
+  } catch {
+    return { error: 'Erro ao atualizar perfil' }
   }
 }
 
@@ -109,12 +151,13 @@ export async function updateRoleCliente(
   role: 'cliente' | 'funcionario' | 'admin'
 ): Promise<{ error: string | null }> {
   try {
-    const { error } = await supabase
-      .from('usuarios')
+    const { error, count } = await (supabase.from('usuarios') as any)
       .update({ role })
       .eq('id', id)
+      .select('id', { count: 'exact', head: true })
 
     if (error) return { error: error.message }
+    if (count === 0) return { error: 'Sem permissão para atualizar este perfil' }
     return { error: null }
   } catch {
     return { error: 'Erro ao atualizar role' }

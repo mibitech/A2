@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useClientesAdmin } from '../controllers/useClientesAdmin'
 import type { ClienteAdmin, PedidoResumo } from '../controllers/useClientesAdmin'
-import { enviarCampanha, getCampanhas } from '../services/campanhas.admin.service'
+import { enviarCampanha, getCampanhas, deleteCampanha } from '../services/campanhas.admin.service'
 import type { Campanha, SegmentoCampanha } from '../services/campanhas.admin.service'
+import { getTagsUnicas } from '../services/clientes.admin.service'
 import Pagination from '@components/ui/Pagination'
 
 const roleLabel: Record<string, string> = {
@@ -44,11 +45,12 @@ interface PerfilModalProps {
   getPedidos: (id: string) => Promise<PedidoResumo[]>
   onUpdateRole: (id: string, role: 'cliente' | 'funcionario' | 'admin') => Promise<{ success: boolean; error?: string }>
   onUpdateTags: (id: string, tags: string[]) => Promise<{ success: boolean; error?: string }>
+  onUpdatePerfil: (id: string, dados: { nomeCompleto?: string; telefone?: string; cpfCnpj?: string; tipoPessoa?: 'fisica' | 'juridica' }) => Promise<{ success: boolean; error?: string }>
 }
 
 const TAGS_SUGERIDAS = ['vip', 'atacado', 'recorrente', 'inativo', 'prospect', 'prioritário']
 
-function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags }: PerfilModalProps) {
+function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags, onUpdatePerfil }: PerfilModalProps) {
   const [pedidos, setPedidos] = useState<PedidoResumo[] | null>(null)
   const [loadingPedidos, setLoadingPedidos] = useState(false)
   const [abaAtiva, setAbaAtiva] = useState<'info' | 'pedidos'>('info')
@@ -59,6 +61,12 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags 
   const [tags, setTags] = useState<string[]>(cliente.tags ?? [])
   const [tagInput, setTagInput] = useState('')
   const [salvandoTags, setSalvandoTags] = useState(false)
+  const [editandoPerfil, setEditandoPerfil] = useState(false)
+  const [nomeEdit, setNomeEdit] = useState(cliente.nomeCompleto ?? '')
+  const [telefoneEdit, setTelefoneEdit] = useState(cliente.telefone ?? '')
+  const [cpfEdit, setCpfEdit] = useState(cliente.cpfCnpj ?? '')
+  const [tipoPessoaEdit, setTipoPessoaEdit] = useState<'fisica' | 'juridica'>(cliente.tipoPessoa)
+  const [salvandoPerfil, setSalvandoPerfil] = useState(false)
 
   async function carregarPedidos() {
     if (pedidos !== null) return
@@ -71,6 +79,24 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags 
   function handleAba(aba: 'info' | 'pedidos') {
     setAbaAtiva(aba)
     if (aba === 'pedidos') carregarPedidos()
+  }
+
+  async function handleSalvarPerfil() {
+    setSalvandoPerfil(true)
+    const result = await onUpdatePerfil(cliente.id, {
+      nomeCompleto: nomeEdit,
+      telefone: telefoneEdit,
+      cpfCnpj: cpfEdit,
+      tipoPessoa: tipoPessoaEdit,
+    })
+    setSalvandoPerfil(false)
+    if (result.success) {
+      setFeedback('Perfil atualizado!')
+      setEditandoPerfil(false)
+      setTimeout(() => setFeedback(null), 3000)
+    } else {
+      setFeedback('Erro: ' + result.error)
+    }
   }
 
   async function handleSalvarRole() {
@@ -152,25 +178,81 @@ function PerfilModal({ cliente, onClose, getPedidos, onUpdateRole, onUpdateTags 
 
           {abaAtiva === 'info' && (
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-neutral-50 p-3">
-                  <p className="text-xs text-neutral-400">Telefone</p>
-                  <p className="mt-0.5 text-sm font-medium text-neutral-700">{cliente.telefone || '—'}</p>
+              {/* Dados básicos */}
+              <div className="rounded-lg border border-neutral-200 p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-medium text-neutral-500">Dados do Perfil</p>
+                  {editandoPerfil ? (
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditandoPerfil(false)} className="text-xs text-neutral-400 hover:text-neutral-600">Cancelar</button>
+                      <button onClick={handleSalvarPerfil} disabled={salvandoPerfil}
+                        className="rounded bg-brand px-2 py-1 text-xs font-medium text-white hover:bg-brand-dark disabled:opacity-50">
+                        {salvandoPerfil ? 'Salvando...' : 'Salvar'}
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setEditandoPerfil(true)} className="text-xs text-brand hover:underline">Editar</button>
+                  )}
                 </div>
-                <div className="rounded-lg bg-neutral-50 p-3">
-                  <p className="text-xs text-neutral-400">CPF/CNPJ</p>
-                  <p className="mt-0.5 text-sm font-medium text-neutral-700">{cliente.cpfCnpj || '—'}</p>
-                </div>
-                <div className="rounded-lg bg-neutral-50 p-3">
-                  <p className="text-xs text-neutral-400">Tipo de Pessoa</p>
-                  <p className="mt-0.5 text-sm font-medium text-neutral-700 capitalize">{cliente.tipoPessoa}</p>
-                </div>
-                <div className="rounded-lg bg-neutral-50 p-3">
-                  <p className="text-xs text-neutral-400">Cliente desde</p>
-                  <p className="mt-0.5 text-sm font-medium text-neutral-700">
-                    {new Date(cliente.createdAt).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
+                {editandoPerfil ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="col-span-2">
+                      <label className="text-xs text-neutral-400">Nome completo</label>
+                      <input value={nomeEdit} onChange={e => setNomeEdit(e.target.value)}
+                        className="mt-0.5 w-full rounded border border-neutral-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-brand" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-neutral-400">Telefone</label>
+                      <input value={telefoneEdit} onChange={e => setTelefoneEdit(e.target.value)}
+                        placeholder="(11) 99999-9999"
+                        className="mt-0.5 w-full rounded border border-neutral-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-brand" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-neutral-400">CPF/CNPJ</label>
+                      <input value={cpfEdit} onChange={e => setCpfEdit(e.target.value)}
+                        className="mt-0.5 w-full rounded border border-neutral-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-brand" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-neutral-400">Tipo de Pessoa</label>
+                      <select value={tipoPessoaEdit} onChange={e => setTipoPessoaEdit(e.target.value as 'fisica' | 'juridica')}
+                        className="mt-0.5 w-full rounded border border-neutral-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-brand">
+                        <option value="fisica">Física</option>
+                        <option value="juridica">Jurídica</option>
+                      </select>
+                    </div>
+                    <div className="rounded-lg bg-neutral-50 p-2">
+                      <p className="text-xs text-neutral-400">Cliente desde</p>
+                      <p className="mt-0.5 text-sm font-medium text-neutral-700">
+                        {new Date(cliente.createdAt).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-lg bg-neutral-50 p-2.5">
+                      <p className="text-xs text-neutral-400">Nome</p>
+                      <p className="mt-0.5 text-sm font-medium text-neutral-700">{cliente.nomeCompleto || '—'}</p>
+                    </div>
+                    <div className="rounded-lg bg-neutral-50 p-2.5">
+                      <p className="text-xs text-neutral-400">Telefone</p>
+                      <p className="mt-0.5 text-sm font-medium text-neutral-700">{cliente.telefone || '—'}</p>
+                    </div>
+                    <div className="rounded-lg bg-neutral-50 p-2.5">
+                      <p className="text-xs text-neutral-400">CPF/CNPJ</p>
+                      <p className="mt-0.5 text-sm font-medium text-neutral-700">{cliente.cpfCnpj || '—'}</p>
+                    </div>
+                    <div className="rounded-lg bg-neutral-50 p-2.5">
+                      <p className="text-xs text-neutral-400">Tipo de Pessoa</p>
+                      <p className="mt-0.5 text-sm font-medium text-neutral-700 capitalize">{cliente.tipoPessoa === 'fisica' ? 'Física' : 'Jurídica'}</p>
+                    </div>
+                    <div className="rounded-lg bg-neutral-50 p-2.5">
+                      <p className="text-xs text-neutral-400">Cliente desde</p>
+                      <p className="mt-0.5 text-sm font-medium text-neutral-700">
+                        {new Date(cliente.createdAt).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Role */}
@@ -362,8 +444,6 @@ function ThSort({ label, col, current, dir, onSort, align = 'left' }: {
 // =====================================================
 // MODAL DE NOVA CAMPANHA
 // =====================================================
-const TAGS_CAMPANHA = ['vip', 'atacado', 'recorrente', 'inativo', 'prospect', 'prioritário']
-
 interface ModalCampanhaProps {
   onClose: () => void
   onSent: () => void
@@ -379,6 +459,11 @@ function ModalCampanha({ onClose, onSent, initialData }: ModalCampanhaProps) {
   const [enviando, setEnviando] = useState(false)
   const [resultado, setResultado] = useState<{ enviados: number } | null>(null)
   const [erro, setErro] = useState<string | null>(null)
+  const [tagsDisponiveis, setTagsDisponiveis] = useState<string[]>([])
+
+  useEffect(() => {
+    getTagsUnicas().then(setTagsDisponiveis)
+  }, [])
 
   async function handleEnviar() {
     if (!titulo.trim() || !assunto.trim() || !html.trim()) { setErro('Preencha todos os campos'); return }
@@ -393,8 +478,8 @@ function ModalCampanha({ onClose, onSent, initialData }: ModalCampanhaProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
+      <div className="flex w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl max-h-[90vh]">
+        <div className="flex shrink-0 items-center justify-between border-b border-neutral-200 px-6 py-4">
           <h2 className="font-bold text-neutral-900">{initialData ? 'Reenviar Campanha' : 'Nova Campanha de E-mail'}</h2>
           <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-neutral-100 text-neutral-400">
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -402,7 +487,7 @@ function ModalCampanha({ onClose, onSent, initialData }: ModalCampanhaProps) {
             </svg>
           </button>
         </div>
-        <div className="space-y-4 p-6">
+        <div className="space-y-4 overflow-y-auto p-6">
           {resultado ? (
             <div className="rounded-xl bg-green-50 p-6 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
@@ -438,13 +523,25 @@ function ModalCampanha({ onClose, onSent, initialData }: ModalCampanhaProps) {
                   <option value="por_tag">Por tag</option>
                 </select>
                 {segmento === 'por_tag' && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {TAGS_CAMPANHA.map(t => (
-                      <button key={t} onClick={() => setTag(t)}
-                        className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${tag === t ? 'bg-brand text-white' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'}`}>
-                        {t}
-                      </button>
-                    ))}
+                  <div className="mt-2">
+                    {tagsDisponiveis.length === 0 ? (
+                      <p className="text-xs text-neutral-400">Nenhuma tag cadastrada nos clientes ainda.</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {tagsDisponiveis.map(t => (
+                          <button key={t} onClick={() => setTag(t)}
+                            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${tag === t ? 'bg-brand text-white' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'}`}>
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {tag && (
+                      <p className="mt-1.5 text-xs text-neutral-500">
+                        Selecionada: <span className="font-medium text-brand">{tag}</span>
+                        <button onClick={() => setTag('')} className="ml-2 text-neutral-400 hover:text-red-500">×</button>
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -478,7 +575,7 @@ function ModalCampanha({ onClose, onSent, initialData }: ModalCampanhaProps) {
 // PÁGINA PRINCIPAL
 // =====================================================
 export default function AdminClientesPage() {
-  const { clientes, isLoading, error, reload, getPedidos, updateRole, updateTags } = useClientesAdmin()
+  const { clientes, isLoading, error, reload, getPedidos, updateRole, updateTags, updatePerfil } = useClientesAdmin()
 
   const [busca, setBusca] = useState('')
   const [filtroRole, setFiltroRole] = useState<'todos' | 'cliente' | 'funcionario' | 'admin'>('todos')
@@ -491,6 +588,9 @@ export default function AdminClientesPage() {
   const [showCampanha, setShowCampanha] = useState(false)
   const [campanhas, setCampanhas] = useState<Campanha[]>([])
   const [loadingCampanhas, setLoadingCampanhas] = useState(false)
+  const [sortCampanha, setSortCampanha] = useState<'titulo' | 'status' | 'enviados' | 'data'>('data')
+  const [sortCampanhaDir, setSortCampanhaDir] = useState<'asc' | 'desc'>('desc')
+  const [deletandoCampanha, setDeletandoCampanha] = useState<string | null>(null)
 
   async function carregarCampanhas() {
     setLoadingCampanhas(true)
@@ -498,6 +598,26 @@ export default function AdminClientesPage() {
     setCampanhas(campanhas)
     setLoadingCampanhas(false)
   }
+
+  function toggleSortCampanha(col: typeof sortCampanha) {
+    if (sortCampanha === col) setSortCampanhaDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortCampanha(col); setSortCampanhaDir('asc') }
+  }
+
+  async function handleDeleteCampanha(id: string) {
+    setDeletandoCampanha(id)
+    const { error } = await deleteCampanha(id)
+    if (!error) setCampanhas(prev => prev.filter(c => c.id !== id))
+    setDeletandoCampanha(null)
+  }
+
+  const campanhasOrdenadas = [...campanhas].sort((a, b) => {
+    const m = sortCampanhaDir === 'asc' ? 1 : -1
+    if (sortCampanha === 'titulo') return m * a.titulo.localeCompare(b.titulo, 'pt-BR')
+    if (sortCampanha === 'status') return m * a.status.localeCompare(b.status, 'pt-BR')
+    if (sortCampanha === 'enviados') return m * (a.totalEnviados - b.totalEnviados)
+    return m * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  })
   const [pageSize, setPageSize] = useState(20)
 
   function toggleSort(col: SortKeyClientes) {
@@ -583,16 +703,32 @@ export default function AdminClientesPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-neutral-200 bg-neutral-50">
-                    <th className="px-4 py-3 text-left font-medium text-neutral-600">Título</th>
-                    <th className="px-4 py-3 text-left font-medium text-neutral-600">Segmento</th>
-                    <th className="px-4 py-3 text-center font-medium text-neutral-600">Enviados</th>
-                    <th className="px-4 py-3 text-center font-medium text-neutral-600">Status</th>
-                    <th className="px-4 py-3 text-right font-medium text-neutral-600">Data</th>
-                    <th className="px-4 py-3 text-center font-medium text-neutral-600">Ação</th>
+                    {([
+                      { label: 'Título', col: 'titulo', align: 'left' },
+                      { label: 'Segmento', col: null, align: 'left' },
+                      { label: 'Enviados', col: 'enviados', align: 'center' },
+                      { label: 'Status', col: 'status', align: 'center' },
+                      { label: 'Data', col: 'data', align: 'right' },
+                      { label: 'Ações', col: null, align: 'center' },
+                    ] as const).map(({ label, col, align }) =>
+                      col ? (
+                        <th key={label} onClick={() => toggleSortCampanha(col)}
+                          className={`cursor-pointer select-none px-4 py-3 text-${align} font-medium text-neutral-600 hover:text-neutral-900`}>
+                          <span className="inline-flex items-center gap-1">
+                            {label}
+                            <span className={`text-xs ${sortCampanha === col ? 'text-brand' : 'text-neutral-300'}`}>
+                              {sortCampanha === col ? (sortCampanhaDir === 'asc' ? '↑' : '↓') : '↕'}
+                            </span>
+                          </span>
+                        </th>
+                      ) : (
+                        <th key={label} className={`px-4 py-3 text-${align} font-medium text-neutral-600`}>{label}</th>
+                      )
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100">
-                  {campanhas.map(c => (
+                  {campanhasOrdenadas.map(c => (
                     <tr key={c.id} className="hover:bg-neutral-50">
                       <td className="px-4 py-3">
                         <p className="font-medium text-neutral-800">{c.titulo}</p>
@@ -614,16 +750,32 @@ export default function AdminClientesPage() {
                         {new Date(c.createdAt).toLocaleDateString('pt-BR')}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={() => { setCampanhaReenvio(c); setShowCampanha(true) }}
-                          title="Reenviar esta campanha"
-                          className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 px-2.5 py-1 text-xs font-medium text-neutral-600 hover:border-brand hover:text-brand transition-colors"
-                        >
-                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                          </svg>
-                          Reenviar
-                        </button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => { setCampanhaReenvio(c); setShowCampanha(true) }}
+                            title="Reenviar campanha"
+                            className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 px-2.5 py-1 text-xs font-medium text-neutral-600 hover:border-brand hover:text-brand transition-colors"
+                          >
+                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            Reenviar
+                          </button>
+                          <button
+                            onClick={() => { if (window.confirm(`Excluir a campanha "${c.titulo}"?`)) handleDeleteCampanha(c.id) }}
+                            disabled={deletandoCampanha === c.id}
+                            title="Excluir campanha"
+                            className="inline-flex items-center rounded-lg border border-neutral-200 px-2 py-1 text-xs font-medium text-red-500 hover:border-red-300 hover:bg-red-50 transition-colors disabled:opacity-40"
+                          >
+                            {deletandoCampanha === c.id ? (
+                              <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                            ) : (
+                              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                              </svg>
+                            )}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -752,6 +904,13 @@ export default function AdminClientesPage() {
             }
             return result
           }}
+          onUpdatePerfil={async (id, dados) => {
+            const result = await updatePerfil(id, dados)
+            if (result.success) {
+              setClienteSelecionado(prev => prev ? { ...prev, ...dados } : null)
+            }
+            return result
+          }}
         />
       )}
       </> }
@@ -759,8 +918,9 @@ export default function AdminClientesPage() {
       {/* Modal Nova Campanha */}
       {showCampanha && (
         <ModalCampanha
+          key={campanhaReenvio?.id ?? 'nova'}
           onClose={() => { setShowCampanha(false); setCampanhaReenvio(null) }}
-          onSent={() => { setAbaAtiva('campanhas'); carregarCampanhas(); setCampanhaReenvio(null) }}
+          onSent={() => { setAbaAtiva('campanhas'); carregarCampanhas() }}
           initialData={campanhaReenvio ?? undefined}
         />
       )}

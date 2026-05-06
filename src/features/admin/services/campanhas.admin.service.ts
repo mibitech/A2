@@ -22,6 +22,16 @@ const _env = (import.meta as any).env
 const _FUNCTION_URL = `${_env.VITE_SUPABASE_URL}/functions/v1/send-campaign`
 const _ANON_KEY: string = _env.VITE_SUPABASE_ANON_KEY
 
+export async function deleteCampanha(id: string): Promise<{ error: string | null }> {
+  try {
+    const { error } = await supabase.from('campanhas_crm').delete().eq('id', id)
+    if (error) return { error: error.message }
+    return { error: null }
+  } catch {
+    return { error: 'Erro ao excluir campanha' }
+  }
+}
+
 export async function getCampanhas(): Promise<{ campanhas: Campanha[]; error: string | null }> {
   try {
     const { data, error } = await supabase

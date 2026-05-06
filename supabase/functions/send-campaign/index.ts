@@ -30,7 +30,6 @@ serve(async (req) => {
     let query = supabase
       .from('usuarios')
       .select('id, email, nome_completo, tags')
-      .eq('ativo', true)
       .not('email', 'is', null)
 
     if (segmento === 'clientes') {
