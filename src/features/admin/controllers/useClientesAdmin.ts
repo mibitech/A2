@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useAuthContext } from '@features/auth/contexts/AuthContext'
 import * as service from '../services/clientes.admin.service'
 import type { ClienteAdmin, PedidoResumo } from '../services/clientes.admin.service'
 
 export type { ClienteAdmin, PedidoResumo }
 
 export function useClientesAdmin() {
+  const { isLoading: authLoading } = useAuthContext()
   const [clientes, setClientes] = useState<ClienteAdmin[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -18,7 +20,7 @@ export function useClientesAdmin() {
     setIsLoading(false)
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { if (!authLoading) load() }, [load, authLoading])
 
   const getPedidos = useCallback(async (usuarioId: string): Promise<PedidoResumo[]> => {
     const { pedidos } = await service.getPedidosCliente(usuarioId)

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useAuthContext } from '@features/auth/contexts/AuthContext'
 import * as service from '../services/site.admin.service'
 import type {
   HeroSlide,
@@ -15,6 +16,7 @@ export { uploadSiteImagem } from '../services/site.admin.service'
 // Hook: Hero Slides
 // =====================================================
 export function useHeroSlides() {
+  const { isLoading: authLoading } = useAuthContext()
   const [slides, setSlides] = useState<HeroSlide[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -27,7 +29,7 @@ export function useHeroSlides() {
     setIsLoading(false)
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { if (!authLoading) load() }, [load, authLoading])
 
   const criar = useCallback(async (payload: Parameters<typeof service.criarHeroSlide>[0]) => {
     const { error: err } = await service.criarHeroSlide(payload)
@@ -60,6 +62,7 @@ export function useHeroSlides() {
 // Hook: Conteúdo por seção
 // =====================================================
 export function useConteudoSecao(secao: SecaoConteudo) {
+  const { isLoading: authLoading } = useAuthContext()
   const [itens, setItens] = useState<ConteudoItem[]>([])
   const [mapa, setMapa] = useState<ConteudoMap>({})
   const [isLoading, setIsLoading] = useState(true)
@@ -74,7 +77,7 @@ export function useConteudoSecao(secao: SecaoConteudo) {
     setIsLoading(false)
   }, [secao])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { if (!authLoading) load() }, [load, authLoading])
 
   const salvar = useCallback(async (updates: { chave: string; valor: string }[]) => {
     const { error: err } = await service.salvarConteudoLote(updates)
@@ -90,6 +93,7 @@ export function useConteudoSecao(secao: SecaoConteudo) {
 // Hook: Galeria Sobre Nós
 // =====================================================
 export function useSobreGaleria() {
+  const { isLoading: authLoading } = useAuthContext()
   const [imagens, setImagens] = useState<SobreImagem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -102,7 +106,7 @@ export function useSobreGaleria() {
     setIsLoading(false)
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { if (!authLoading) load() }, [load, authLoading])
 
   const adicionar = useCallback(async (url: string, alt: string) => {
     const ordem = imagens.length

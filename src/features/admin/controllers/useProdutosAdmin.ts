@@ -10,7 +10,7 @@ type ProdutoUpdate = Database['public']['Tables']['produtos']['Update']
 export type { ProdutoAdmin, MovimentacaoEstoque }
 
 export function useProdutosAdmin() {
-  const { user } = useAuthContext()
+  const { user, isLoading: authLoading } = useAuthContext()
   const [produtos, setProdutos] = useState<ProdutoAdmin[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -24,7 +24,7 @@ export function useProdutosAdmin() {
     setIsLoading(false)
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { if (!authLoading) load() }, [load, authLoading])
 
   const create = useCallback(async (
     data: Omit<ProdutoInsert, 'id' | 'created_at' | 'updated_at'>

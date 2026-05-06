@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useAuthContext } from '@features/auth/contexts/AuthContext'
 import * as service from '../services/pedidos.admin.service'
 import type { PedidoAdmin, ItemPedidoAdmin, StatusPedido } from '../services/pedidos.admin.service'
 
 export type { PedidoAdmin, ItemPedidoAdmin, StatusPedido }
 
 export function usePedidosAdmin() {
+  const { isLoading: authLoading } = useAuthContext()
   const [pedidos, setPedidos] = useState<PedidoAdmin[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -18,7 +20,7 @@ export function usePedidosAdmin() {
     setIsLoading(false)
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => { if (!authLoading) load() }, [load, authLoading])
 
   const getItens = useCallback(async (pedidoId: string): Promise<ItemPedidoAdmin[]> => {
     const { itens } = await service.getItensPedido(pedidoId)

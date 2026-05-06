@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useAuthContext } from '@features/auth/contexts/AuthContext'
 import * as service from '../services/financeiro.admin.service'
 import type {
   LancamentoCaixa,
@@ -11,6 +12,7 @@ import type {
 export type { LancamentoCaixa, TipoLancamento, ResumoFinanceiro, CategoriaCaixa, TipoCategoria }
 
 export function useFinanceiroAdmin() {
+  const { isLoading: authLoading } = useAuthContext()
   const [lancamentos, setLancamentos] = useState<LancamentoCaixa[]>([])
   const [categorias, setCategorias] = useState<CategoriaCaixa[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -36,8 +38,8 @@ export function useFinanceiroAdmin() {
     setIsLoadingCategorias(false)
   }, [])
 
-  useEffect(() => { loadLancamentos() }, [loadLancamentos])
-  useEffect(() => { loadCategorias() }, [loadCategorias])
+  useEffect(() => { if (!authLoading) loadLancamentos() }, [loadLancamentos, authLoading])
+  useEffect(() => { if (!authLoading) loadCategorias() }, [loadCategorias, authLoading])
 
   // Categorias filtradas por tipo de lançamento (inclui "ambos")
   function categoriasPorTipo(tipo: TipoLancamento): CategoriaCaixa[] {
