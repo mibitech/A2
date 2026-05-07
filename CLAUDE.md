@@ -178,10 +178,10 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 
 ### ❌ Pendente
 
-#### Migrations a aplicar no Supabase SQL Editor
-- `20260507000002` — coluna `destinatarios_manual` + `lista_manual` no segmento
-- `20260507000003` — status check com `arquivada` e `cancelada`
-- `20260507000004` — template de apresentação A2 Brasil Supplies
+#### Migrations aplicadas ✅
+- `20260507000002` — coluna `destinatarios_manual` + `lista_manual` no segmento ✅
+- `20260507000003` — status check com `arquivada` e `cancelada` ✅
+- `20260507000004` — template de apresentação A2 Brasil Supplies ✅
 
 #### Brevo — entrega incompleta
 - Apenas 1 de 3 e-mails chegou em teste de lista manual
