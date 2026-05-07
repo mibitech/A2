@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { campanha_id, assunto, conteudo_html, segmento, tag_filtro } = await req.json()
+    const { campanha_id, assunto, conteudo_html, segmento, tag_filtro, destinatarios } = await req.json()
 
     if (!assunto || !conteudo_html || !segmento) {
       return new Response(
@@ -26,25 +26,45 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // Buscar destinatários conforme segmento
-    let query = supabase
-      .from('usuarios')
-      .select('id, email, nome_completo, tags')
-      .not('email', 'is', null)
+    type Destinatario = { email: string; nome: string }
+    let lista: Destinatario[] = []
 
-    if (segmento === 'clientes') {
-      query = query.eq('role', 'cliente')
-    } else if (segmento === 'por_tag' && tag_filtro) {
-      query = query.contains('tags', [tag_filtro])
-    }
+    if (segmento === 'lista_manual') {
+      // Usa a lista passada diretamente na request
+      const emails: string[] = Array.isArray(destinatarios) ? destinatarios : []
+      if (emails.length === 0) {
+        return new Response(
+          JSON.stringify({ error: 'Nenhum e-mail informado na lista manual' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      lista = emails.map(e => ({ email: e.trim(), nome: e.split('@')[0] }))
+    } else {
+      // Busca destinatários cadastrados conforme segmento
+      let query = supabase
+        .from('usuarios')
+        .select('id, email, nome_completo, tags')
+        .not('email', 'is', null)
 
-    const { data: usuarios, error: usersErr } = await query
+      if (segmento === 'clientes') {
+        query = query.eq('role', 'cliente')
+      } else if (segmento === 'por_tag' && tag_filtro) {
+        query = query.contains('tags', [tag_filtro])
+      }
 
-    if (usersErr || !usuarios?.length) {
-      return new Response(
-        JSON.stringify({ error: usersErr?.message ?? 'Nenhum destinatário encontrado' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      const { data: usuarios, error: usersErr } = await query
+
+      if (usersErr || !usuarios?.length) {
+        return new Response(
+          JSON.stringify({ error: usersErr?.message ?? 'Nenhum destinatário encontrado' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      lista = usuarios.map(u => ({
+        email: u.email,
+        nome: u.nome_completo ?? u.email.split('@')[0],
+      }))
     }
 
     const brevoKey = Deno.env.get('BREVO_API_KEY')!
@@ -54,45 +74,61 @@ serve(async (req) => {
     let enviados = 0
     const erros: string[] = []
 
-    // Envia em lotes de 10 para não sobrecarregar a API
-    const loteSize = 10
-    for (let i = 0; i < usuarios.length; i += loteSize) {
-      const lote = usuarios.slice(i, i + loteSize)
+    console.log(`[send-campaign] Iniciando envio para ${lista.length} destinatário(s). Segmento: ${segmento}`)
 
-      await Promise.all(lote.map(async (u) => {
-        const html = conteudo_html
-          .replace(/{{nome}}/g, u.nome_completo ?? u.email.split('@')[0])
-          .replace(/{{email}}/g, u.email)
+    // Envia individualmente para capturar erros por e-mail
+    for (const u of lista) {
+      const html = conteudo_html
+        .replace(/{{nome}}/g, u.nome)
+        .replace(/{{email}}/g, u.email)
 
+      const emailCtrl = new AbortController()
+      const emailTimer = setTimeout(() => emailCtrl.abort(), 15_000)
+
+      try {
         const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
           method: 'POST',
+          signal: emailCtrl.signal,
           headers: {
             'api-key': brevoKey,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             sender: { name: fromName, email: fromEmail },
-            to: [{ email: u.email, name: u.nome_completo ?? u.email }],
+            to: [{ email: u.email, name: u.nome }],
             subject: assunto,
             htmlContent: html,
           }),
         })
+        clearTimeout(emailTimer)
+
+        const respBody = await resp.text()
 
         if (resp.ok) {
           enviados++
+          console.log(`[send-campaign] ✓ Enviado: ${u.email}`)
         } else {
-          const err = await resp.text()
-          erros.push(`${u.email}: ${err}`)
+          const msg = `${u.email} → HTTP ${resp.status}: ${respBody}`
+          erros.push(msg)
+          console.error(`[send-campaign] ✗ Falhou: ${msg}`)
         }
-      }))
+      } catch (sendErr) {
+        clearTimeout(emailTimer)
+        const isTimeout = sendErr instanceof Error && sendErr.name === 'AbortError'
+        const msg = `${u.email} → ${isTimeout ? 'Timeout (15s)' : sendErr instanceof Error ? sendErr.message : String(sendErr)}`
+        erros.push(msg)
+        console.error(`[send-campaign] ✗ ${msg}`)
+      }
     }
+
+    console.log(`[send-campaign] Concluído: ${enviados} enviados, ${erros.length} erros`)
 
     // Atualizar status da campanha se foi salva antes
     if (campanha_id) {
       await supabase
         .from('campanhas_crm')
         .update({
-          status: erros.length === 0 ? 'enviada' : 'erro',
+          status: erros.length === 0 ? 'enviada' : (enviados > 0 ? 'enviada' : 'erro'),
           total_enviados: enviados,
           enviada_at: new Date().toISOString(),
           erro_msg: erros.length > 0 ? erros.slice(0, 5).join(' | ') : null,
@@ -101,7 +137,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, enviados, erros: erros.length }),
+      JSON.stringify({ success: true, enviados, erros: erros.length, detalhes_erros: erros }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (err) {

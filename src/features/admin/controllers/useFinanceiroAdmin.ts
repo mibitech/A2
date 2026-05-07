@@ -19,17 +19,21 @@ export function useFinanceiroAdmin() {
   const [isLoadingCategorias, setIsLoadingCategorias] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filtroTipo, setFiltroTipo] = useState<TipoLancamento | 'todos'>('todos')
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim] = useState('')
 
   const loadLancamentos = useCallback(async () => {
     setIsLoading(true)
     setError(null)
-    const { lancamentos: data, error: err } = await service.getLancamentos(
-      filtroTipo !== 'todos' ? { tipo: filtroTipo } : undefined
-    )
+    const { lancamentos: data, error: err } = await service.getLancamentos({
+      ...(filtroTipo !== 'todos' && { tipo: filtroTipo }),
+      ...(dataInicio && { dataInicio }),
+      ...(dataFim && { dataFim }),
+    })
     setLancamentos(data)
     if (err) setError(err)
     setIsLoading(false)
-  }, [filtroTipo])
+  }, [filtroTipo, dataInicio, dataFim])
 
   const loadCategorias = useCallback(async () => {
     setIsLoadingCategorias(true)
@@ -94,6 +98,10 @@ export function useFinanceiroAdmin() {
     resumo,
     filtroTipo,
     setFiltroTipo,
+    dataInicio,
+    setDataInicio,
+    dataFim,
+    setDataFim,
     categoriasPorTipo,
     reloadLancamentos: loadLancamentos,
     reloadCategorias: loadCategorias,

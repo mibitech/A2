@@ -3,91 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../contexts/CartContext'
 import { Button, Card } from '@components/ui'
 import { Header, Footer } from '@components/layout'
-
-// =====================================================
-// FRETE MOCKADO
-// =====================================================
-
-interface OpcaoFrete {
-  id: string
-  nome: string
-  prazo: string
-  valor: number
-}
-
-function calcularFreteMock(cep: string, subtotal: number): OpcaoFrete[] {
-  const prefix = parseInt(cep.replace(/\D/g, '').slice(0, 2))
-
-  // Frete grátis acima de R$ 500
-  const gratis = subtotal >= 500
-
-  // Regiões aproximadas por faixa de CEP
-  let pac: number
-  let sedex: number
-
-  if (prefix >= 1 && prefix <= 19) {
-    // São Paulo capital / ABCD
-    pac = gratis ? 0 : 14.9
-    sedex = gratis ? 0 : 29.9
-  } else if (prefix >= 20 && prefix <= 28) {
-    // Rio de Janeiro
-    pac = gratis ? 0 : 19.9
-    sedex = gratis ? 0 : 38.9
-  } else if (prefix >= 29 && prefix <= 39) {
-    // ES / MG
-    pac = gratis ? 0 : 22.9
-    sedex = gratis ? 0 : 42.9
-  } else if (prefix >= 40 && prefix <= 48) {
-    // BA / SE
-    pac = gratis ? 0 : 26.9
-    sedex = gratis ? 0 : 49.9
-  } else if (prefix >= 49 && prefix <= 65) {
-    // Centro-Oeste / Norte
-    pac = gratis ? 0 : 32.9
-    sedex = gratis ? 0 : 58.9
-  } else if (prefix >= 66 && prefix <= 69) {
-    // Pará / Amazônia
-    pac = gratis ? 0 : 38.9
-    sedex = gratis ? 0 : 68.9
-  } else if (prefix >= 70 && prefix <= 76) {
-    // Brasília / GO
-    pac = gratis ? 0 : 24.9
-    sedex = gratis ? 0 : 44.9
-  } else if (prefix >= 77 && prefix <= 79) {
-    // MT / MS
-    pac = gratis ? 0 : 29.9
-    sedex = gratis ? 0 : 52.9
-  } else if (prefix >= 80 && prefix <= 87) {
-    // Paraná
-    pac = gratis ? 0 : 16.9
-    sedex = gratis ? 0 : 32.9
-  } else if (prefix >= 88 && prefix <= 89) {
-    // Santa Catarina
-    pac = gratis ? 0 : 17.9
-    sedex = gratis ? 0 : 34.9
-  } else {
-    // Rio Grande do Sul / demais
-    pac = gratis ? 0 : 18.9
-    sedex = gratis ? 0 : 36.9
-  }
-
-  const opcoes: OpcaoFrete[] = [
-    {
-      id: 'pac',
-      nome: 'PAC (Correios)',
-      prazo: '5 a 8 dias úteis',
-      valor: pac,
-    },
-    {
-      id: 'sedex',
-      nome: 'SEDEX (Correios)',
-      prazo: '2 a 3 dias úteis',
-      valor: sedex,
-    },
-  ]
-
-  return opcoes
-}
+import { calcularFrete } from '../services/frete.service'
+import type { OpcaoFrete, InfoCep } from '../services/frete.service'
 
 // =====================================================
 // COMPONENTE: CÁLCULO DE FRETE
@@ -103,6 +20,7 @@ function CalcFrete({ subtotal, onFreteSelect, freteSelecionado }: CalcFreteProps
   const [cep, setCep] = useState('')
   const [calculando, setCalculando] = useState(false)
   const [opcoes, setOpcoes] = useState<OpcaoFrete[] | null>(null)
+  const [infoCep, setInfoCep] = useState<InfoCep | null>(null)
   const [erro, setErro] = useState<string | null>(null)
 
   function formatarCep(valor: string) {
@@ -117,12 +35,18 @@ function CalcFrete({ subtotal, onFreteSelect, freteSelecionado }: CalcFreteProps
     setErro(null)
     setCalculando(true)
     onFreteSelect(null)
-    // Simula latência de API
-    await new Promise(r => setTimeout(r, 800))
-    const resultado = calcularFreteMock(nums, subtotal)
-    setOpcoes(resultado)
-    // Seleciona automaticamente o primeiro (mais barato)
-    if (resultado.length > 0) onFreteSelect(resultado[0] ?? null)
+    setInfoCep(null)
+
+    const { opcoes: resultado, infoCep: info, error } = await calcularFrete(nums, subtotal)
+
+    if (error) {
+      setErro(error)
+      setOpcoes(null)
+    } else {
+      setOpcoes(resultado)
+      setInfoCep(info)
+      if (resultado.length > 0) onFreteSelect(resultado[0] ?? null)
+    }
     setCalculando(false)
   }
 
@@ -160,7 +84,16 @@ function CalcFrete({ subtotal, onFreteSelect, freteSelecionado }: CalcFreteProps
         </button>
       </div>
 
-      {subtotal >= 500 && (
+      {infoCep && (
+        <p className="mt-1.5 text-xs text-neutral-500">
+          {infoCep.cidade} — {infoCep.uf}
+          {subtotal >= 500 && (
+            <span className="ml-1.5 font-medium text-green-600">· Frete grátis!</span>
+          )}
+        </p>
+      )}
+
+      {!infoCep && subtotal >= 500 && (
         <p className="mt-1.5 text-xs text-green-600 font-medium">
           Parabéns! Seu pedido tem frete grátis.
         </p>

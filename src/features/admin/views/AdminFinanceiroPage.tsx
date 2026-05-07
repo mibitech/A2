@@ -7,6 +7,71 @@ import Pagination from '@components/ui/Pagination'
 const fmtBRL = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const fmtData = (d: string) => new Date(d + 'T00:00:00').toLocaleDateString('pt-BR')
 
+// =====================================================
+// GRÁFICO SVG — ENTRADAS × SAÍDAS POR MÊS
+// =====================================================
+function GraficoMensal({ lancamentos }: { lancamentos: LancamentoCaixa[] }) {
+  const now = new Date()
+  const meses = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const label = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
+    return { key, label, entradas: 0, saidas: 0 }
+  })
+
+  for (const l of lancamentos) {
+    const key = l.dataRef.slice(0, 7)
+    const m = meses.find(m => m.key === key)
+    if (!m) continue
+    if (l.tipo === 'entrada') m.entradas += l.valor
+    else m.saidas += l.valor
+  }
+
+  const maxVal = Math.max(...meses.flatMap(m => [m.entradas, m.saidas]), 1)
+  const W = 600, H = 140
+  const PAD = { top: 12, bottom: 28, left: 8, right: 8 }
+  const chartH = H - PAD.top - PAD.bottom
+  const groupW = (W - PAD.left - PAD.right) / meses.length
+  const barW = Math.min(groupW * 0.33, 26)
+  const gap = barW * 0.25
+
+  return (
+    <div className="rounded-xl border border-neutral-200 bg-white p-4">
+      <h3 className="mb-3 text-sm font-semibold text-neutral-700">Entradas × Saídas por mês</h3>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 160 }}>
+        <line
+          x1={PAD.left} y1={PAD.top + chartH}
+          x2={W - PAD.right} y2={PAD.top + chartH}
+          stroke="#e5e7eb" strokeWidth={1}
+        />
+        {meses.map((m, i) => {
+          const cx = PAD.left + (i + 0.5) * groupW
+          const entH = Math.max((m.entradas / maxVal) * chartH, m.entradas > 0 ? 3 : 0)
+          const saiH = Math.max((m.saidas / maxVal) * chartH, m.saidas > 0 ? 3 : 0)
+          const y0 = PAD.top + chartH
+          return (
+            <g key={m.key}>
+              <rect x={cx - gap / 2 - barW} y={y0 - entH} width={barW} height={entH} rx={3} fill="#22c55e" opacity={0.85} />
+              <rect x={cx + gap / 2} y={y0 - saiH} width={barW} height={saiH} rx={3} fill="#ef4444" opacity={0.85} />
+              <text x={cx} y={H - 6} textAnchor="middle" fontSize={10} fill="#9ca3af">{m.label}</text>
+            </g>
+          )
+        })}
+      </svg>
+      <div className="flex gap-4 justify-center mt-1">
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-green-500 opacity-85" />
+          <span className="text-xs text-neutral-500">Entradas</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-red-500 opacity-85" />
+          <span className="text-xs text-neutral-500">Saídas</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const TIPO_LABEL: Record<TipoCategoria, string> = {
   entrada: 'Entrada',
   saida: 'Saída',
@@ -321,10 +386,19 @@ export default function AdminFinanceiroPage() {
   const { user } = useAuthContext()
   const {
     lancamentos, categorias, isLoading, isLoadingCategorias, error, resumo,
-    filtroTipo, setFiltroTipo, categoriasPorTipo,
+    filtroTipo, setFiltroTipo,
+    dataInicio, setDataInicio, dataFim, setDataFim,
+    categoriasPorTipo,
     reloadLancamentos, criar, excluir,
     criarCategoria, toggleCategoria, excluirCategoria,
   } = useFinanceiroAdmin()
+
+  function limparFiltros() {
+    setFiltroTipo('todos')
+    setDataInicio('')
+    setDataFim('')
+    setPage(1)
+  }
 
   const [aba, setAba] = useState<'lancamentos' | 'categorias'>('lancamentos')
   const [modalAberto, setModalAberto] = useState(false)
@@ -408,8 +482,13 @@ export default function AdminFinanceiroPage() {
       {/* Conteúdo: Lançamentos */}
       {aba === 'lancamentos' && (
         <>
+          {/* Gráfico mensal */}
+          <div className="mb-5">
+            <GraficoMensal lancamentos={lancamentos} />
+          </div>
+
           {/* Filtros */}
-          <div className="flex gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4 items-center">
             {(['todos', 'entrada', 'saida'] as const).map(f => (
               <button key={f} onClick={() => { setFiltroTipo(f); setPage(1) }}
                 className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
@@ -420,6 +499,31 @@ export default function AdminFinanceiroPage() {
                 {f === 'todos' ? 'Todos' : f === 'entrada' ? 'Entradas' : 'Saídas'}
               </button>
             ))}
+
+            <div className="flex items-center gap-1.5 ml-1">
+              <span className="text-xs text-neutral-400">De</span>
+              <input
+                type="date"
+                value={dataInicio}
+                onChange={e => { setDataInicio(e.target.value); setPage(1) }}
+                className="rounded-lg border border-neutral-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+              <span className="text-xs text-neutral-400">até</span>
+              <input
+                type="date"
+                value={dataFim}
+                onChange={e => { setDataFim(e.target.value); setPage(1) }}
+                className="rounded-lg border border-neutral-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+            </div>
+
+            {(dataInicio || dataFim || filtroTipo !== 'todos') && (
+              <button onClick={limparFiltros}
+                className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs text-neutral-500 hover:bg-neutral-50 transition-colors">
+                Limpar filtros
+              </button>
+            )}
+
             <button onClick={reloadLancamentos}
               className="ml-auto rounded-lg border border-neutral-300 px-3 py-1.5 text-xs text-neutral-600 hover:bg-neutral-50">
               <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -27,8 +27,10 @@ import AdminPedidosPage from './features/admin/views/AdminPedidosPage'
 import AdminClientesPage from './features/admin/views/AdminClientesPage'
 import AdminFinanceiroPage from './features/admin/views/AdminFinanceiroPage'
 import AdminSitePage from './features/admin/views/AdminSitePage'
+import AdminCampanhasPage from './features/admin/views/AdminCampanhasPage'
 import SobreNosPage from './features/sobre/views/SobreNosPage'
 import ContatosPage from './features/contatos/views/ContatosPage'
+import AcompanhePedidoPage from './features/pedidos/views/AcompanhePedidoPage'
 import WhatsAppBubble from './components/layout/WhatsAppBubble'
 
 function App() {
@@ -43,6 +45,7 @@ function App() {
       <Route path="/sobre" element={<SobreNosPage />} />
       <Route path="/contatos" element={<ContatosPage />} />
       <Route path="/contato" element={<Navigate to="/contatos" replace />} />
+      <Route path="/rastrear-pedido" element={<AcompanhePedidoPage />} />
 
       {/* Auth Routes */}
       <Route path="/auth/login" element={<LoginPage />} />
@@ -83,6 +86,7 @@ function App() {
         <Route path="estoque" element={<AdminEstoquePage />} />
         <Route path="pedidos" element={<AdminPedidosPage />} />
         <Route path="clientes" element={<AdminClientesPage />} />
+        <Route path="campanhas" element={<AdminCampanhasPage />} />
         <Route path="financeiro" element={<AdminFinanceiroPage />} />
         <Route path="site" element={<AdminSitePage />} />
         <Route path="design-system" element={<DesignSystemPage />} />

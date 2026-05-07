@@ -110,6 +110,31 @@ export async function getPedidosRecentes(): Promise<{ pedidos: PedidoRecente[]; 
   }
 }
 
+// ===== SALDO DO CAIXA MANUAL (MÊS ATUAL) =====
+export async function getSaldoCaixaMes(): Promise<{ saldo: number; error: string | null }> {
+  try {
+    const hoje = new Date()
+    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().slice(0, 10)
+
+    // @ts-ignore — tabela não está no tipo gerado do Supabase
+    const { data, error } = await supabase
+      .from('lancamentos_caixa')
+      .select('tipo, valor')
+      .gte('data_ref', inicioMes)
+
+    if (error) return { saldo: 0, error: error.message }
+
+    const saldo = ((data ?? []) as { tipo: string; valor: number }[]).reduce((acc, l) => {
+      const v = Number(l.valor) || 0
+      return l.tipo === 'entrada' ? acc + v : acc - v
+    }, 0)
+
+    return { saldo, error: null }
+  } catch {
+    return { saldo: 0, error: 'Erro ao buscar saldo do caixa' }
+  }
+}
+
 // ===== PRODUTOS COM ESTOQUE BAIXO (≤ 5) =====
 export async function getProdutosEstoqueBaixo(): Promise<{ produtos: ProdutoEstoqueBaixo[]; error: string | null }> {
   try {

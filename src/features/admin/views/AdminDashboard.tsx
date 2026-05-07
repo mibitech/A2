@@ -5,6 +5,7 @@ import {
   getDashboardStats,
   getPedidosRecentes,
   getProdutosEstoqueBaixo,
+  getSaldoCaixaMes,
 } from '../services/dashboard.admin.service'
 import type {
   DashboardStats,
@@ -52,8 +53,8 @@ const modules = [
   {
     name: 'Financeiro',
     href: '/admin/financeiro',
-    descricao: 'Conciliação Stripe e fluxo de caixa (aguardando configuração do Stripe)',
-    ativo: false,
+    descricao: 'Fluxo de caixa manual, lançamentos por categoria e resumo de entradas e saídas',
+    ativo: true,
   },
 ]
 
@@ -68,6 +69,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [pedidos, setPedidos] = useState<PedidoRecente[] | null>(null)
   const [estoqueBaixo, setEstoqueBaixo] = useState<ProdutoEstoqueBaixo[] | null>(null)
+  const [saldoCaixa, setSaldoCaixa] = useState<number | null>(null)
   const [loadingStats, setLoadingStats] = useState(true)
   const [loadingPedidos, setLoadingPedidos] = useState(true)
   const [loadingEstoque, setLoadingEstoque] = useState(true)
@@ -85,6 +87,7 @@ export default function AdminDashboard() {
       setEstoqueBaixo(p)
       setLoadingEstoque(false)
     })
+    getSaldoCaixaMes().then(({ saldo }) => setSaldoCaixa(saldo))
   }, [])
 
   const statCards = [
@@ -132,6 +135,19 @@ export default function AdminDashboard() {
       bg: 'bg-orange-50',
       valueColor: 'text-orange-700',
     },
+    {
+      label: 'Saldo do caixa',
+      value: saldoCaixa !== null
+        ? saldoCaixa.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+        : null,
+      icon: (
+        <svg className="h-5 w-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        </svg>
+      ),
+      bg: 'bg-teal-50',
+      valueColor: saldoCaixa !== null && saldoCaixa < 0 ? 'text-red-600' : 'text-teal-700',
+    },
   ]
 
   return (
@@ -145,14 +161,16 @@ export default function AdminDashboard() {
       </div>
 
       {/* Cards de métricas */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         {statCards.map((card) => (
           <div key={card.label} className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
             <div className={`inline-flex h-10 w-10 items-center justify-center rounded-lg ${card.bg} mb-3`}>
               {card.icon}
             </div>
             <p className="text-xs text-neutral-500">{card.label}</p>
-            {loadingStats ? (
+            {loadingStats && card.label !== 'Saldo do caixa' ? (
+              <Skeleton className="mt-1 h-7 w-20" />
+            ) : card.label === 'Saldo do caixa' && saldoCaixa === null ? (
               <Skeleton className="mt-1 h-7 w-20" />
             ) : (
               <p className={`mt-1 text-2xl font-bold ${card.valueColor}`}>{card.value}</p>

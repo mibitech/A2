@@ -95,7 +95,7 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 
 ---
 
-## 📌 Status do Projeto Hoje (2026-04-24)
+## 📌 Status do Projeto Hoje (2026-05-06)
 
 ### ✅ Concluído (Fase 1 — base)
 - Hero section + proposta de valor
@@ -120,73 +120,88 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - CRUD completo de produtos, upload de imagens, histórico de movimentações
 - Ordenação clicável (Produto, Categoria, Preço, Estoque) + paginação (10/20/50/100)
 
-#### Épico 9 — CRM ✅ (US-20 + tags concluídos)
+#### Épico 9 — CRM ✅ (US-20 + tags + campanhas completo)
 - `AdminClientesPage`: tabela com busca, filtro por role, stats totais
-- `PerfilModal`: abas Info (role management + tags de segmentação) + Pedidos (lazy-load)
-- Tags: chips visuais, input com Enter, sugestões, salvar via `updateTagsCliente`
-- Ordenação clicável (Usuário, Acesso, Cadastro) + paginação
-- US-21 (campanhas por Brevo) — bloqueado aguardando chave Brevo
+- `PerfilModal`: edição completa — nome, telefone, CPF/CNPJ, tipo pessoa, role, tags
+- Tags: chips visuais, input com Enter, sugestões da base + salvar (RLS corrigido)
+- **Campanhas — sistema completo** (`/admin/campanhas`):
+  - Aba Templates: CRUD com mini-preview (scale 35%), modal editor + toggle preview
+  - Aba Campanhas: tabela com filtros de status, ações por lifecycle
+  - Segmentos: todos / clientes / por_tag / lista_manual
+  - Lista manual: textarea com parsing robusto, preview chips verde/laranja, deduplicação
+  - Lifecycle: Enviando → Enviada → Arquivada; botão Reenviar gera novo registro
+  - Migrations: `20260507000001` (templates), `20260507000002` (lista_manual), `20260507000003` (status check), `20260507000004` (template apresentação)
+- Fix RLS: `20260506000002` — UPDATE em `usuarios` permite `is_staff()` (não só admin)
+- US-21 (envio real): Edge Function `send-campaign` deployada via CLI, BREVO_API_KEY configurada
+  → Brevo enviando mas com problema de suppression list nos testes — investigar em app.brevo.com → Contacts → Blocklist
 
 #### Admin Pedidos ✅
 - `AdminPedidosPage`: tabela + cards de status + busca; DetalheModal com Itens, Entrega, Observações
 - Fluxo de avanço de status manual (sem Stripe)
 - Ordenação clicável (Cliente, Status, Total, Data) + paginação
-- Seed de 10 pedidos fake em `supabase/seeds/seed_pedidos_fake.sql` (pendente aplicação pelo usuário)
+- Seed de 10 pedidos fake em `supabase/seeds/seed_pedidos_fake.sql` (pendente aplicação)
 
 #### Dashboard Admin ✅ (dados reais)
-- 4 cards ao vivo, últimos 5 pedidos, estoque baixo, módulos com status real
+- 5 cards ao vivo: Pedidos, Clientes, Produtos, Receita, **Saldo do Caixa** (novo)
+- Últimos 5 pedidos, estoque baixo, módulos com status real
+- Módulo Financeiro ativo (era "aguardando Stripe")
 
 #### Minha Conta (/conta) ✅
 - Abas: Dados pessoais (editar), Meus pedidos (histórico), Segurança (alterar senha)
 
-#### US-22 parcial — Fluxo de Caixa Manual ✅
+#### Acompanhe seu Pedido (/rastrear-pedido) ✅
+- Progresso visual 5 etapas (pendente → entregue), caso especial "cancelado"
+- Busca pedidos do usuário logado; filtro por número; prompt de login se não autenticado
+- "Central de Atendimento" removido do menu principal
+
+#### US-22 — Fluxo de Caixa Manual ✅
 - Tabela `lancamentos_caixa` + `categorias_caixa` com seed padrão
-- `AdminFinanceiroPage`: abas Lançamentos + Categorias; modal com seleção de categoria por tipo
+- `AdminFinanceiroPage`: filtro por data (De/Até), gráfico SVG 6 meses, abas Lançamentos + Categorias
 - Paginação na aba Lançamentos (10/20/50/100)
+
+#### Frete ViaCEP ✅
+- `frete.service.ts`: ViaCEP para validar CEP + exibir cidade/UF, tabela preços por UF
+- Frete grátis se subtotal ≥ R$500
+- TODO marcado para substituir por Melhor Envio/Correios quando tiver credenciais + pesos
 
 #### Conteúdo Dinâmico do Site ✅
 - Bucket `site` + tabelas `hero_slides`, `conteudo_site`, `sobre_galeria`
-- `AdminSitePage`: 5 abas — Carrossel (CRUD de slides + upload), Sobre Nós (textos + galeria), Contatos, Institucional, WhatsApp
-- Carrossel da home (`HeroSection`) carrega slides do banco com fallback
-- Páginas públicas `/sobre` e `/contatos` com conteúdo parcialmente dinâmico
-- Redirect `/contato` → `/contatos`
+- `AdminSitePage`: 5 abas — Carrossel, Sobre Nós, Contatos, Institucional, WhatsApp
+- Carrossel home carrega slides do banco com fallback
 
-#### WhatsApp Bubble ✅
-- `WhatsAppBubble.tsx` — botão flutuante global, toggle liga/desliga pelo admin
-- Configuração em `/admin/site` → aba WhatsApp (número, mensagem, label, toggle)
-
-#### Sidebar Admin Colapsável ✅
-- Toggle ícones/expandido com botão (setas ‹‹/››) no topo da sidebar
-- Modo compacto (`w-16`): apenas ícones com tooltip CSS ao hover
-- Mobile (`< 1024px`): sempre inicia retraído
-- Desktop: preferência salva no `localStorage` (`admin_sidebar_collapsed`)
-
-#### UX Catálogo de Produtos ✅
-- `ProductsPage.tsx` — visualização padrão alterada para **lista** (era grade)
-- `ProductCard.tsx` — botão "Ver Detalhes" sempre centralizado no rodapé (modo lista)
-- `ProductDetailPage.tsx` — thumbnails clicáveis trocam imagem principal
-- `App.tsx` — `ScrollToTop` global: toda navegação inicia no topo da página
+#### WhatsApp Bubble + Sidebar Colapsável + UX Catálogo ✅
+- Botão flutuante global com toggle admin; sidebar colapsável com localStorage
+- Catálogo em modo lista, thumbnails clicáveis no detalhe, ScrollToTop global
 
 #### Seed Wireset ✅ (pronto para aplicar)
 - `supabase/seeds/seed_wireset_produtos.sql` — 63 produtos com `ativo=false`, `preco=0`
-- Ficam invisíveis no catálogo público até ativação manual na Fase 3
 
-### ❌ Pendente (travado por dependência externa)
-- **US-13** — Checkout Stripe (sem chaves configuradas)
-- **US-14** — E-mail Brevo (sem chaves configuradas)
+### ❌ Pendente
+
+#### Migrations a aplicar no Supabase SQL Editor
+- `20260507000002` — coluna `destinatarios_manual` + `lista_manual` no segmento
+- `20260507000003` — status check com `arquivada` e `cancelada`
+- `20260507000004` — template de apresentação A2 Brasil Supplies
+
+#### Brevo — entrega incompleta
+- Apenas 1 de 3 e-mails chegou em teste de lista manual
+- Verificar: app.brevo.com → Contacts → Blocklist (outros 2 podem estar suprimidos)
+
+#### Bloqueados por dependência
+- **US-13** — Checkout Stripe (chaves configuradas, falta implementar Edge Function + webhook)
+- **US-14** — E-mail confirmação de pedido (Brevo OK, falta implementar o fluxo)
 - **US-19** — Alertas estoque mínimo (n8n + WhatsApp)
-- **US-21** — Campanhas CRM (Brevo)
-- **Épico 10 completo** — Financeiro Stripe (conciliação automática)
+- **Épico 10** — Financeiro Stripe (conciliação automática)
 - **Épico 11** — Automações n8n
 
 ### 🚀 Próximas Ações (sem bloqueio externo)
-1. **Deploy**: `pnpm build && pm2 restart a2tech` no servidor `54.232.189.113`
-2. **Aplicar migration** `20260423000005_whatsapp_bubble.sql` no Supabase SQL Editor
-3. **Configurar WhatsApp**: `/admin/site` → aba WhatsApp → número real
-4. **Aplicar seed de pedidos fake**: `supabase/seeds/seed_pedidos_fake.sql`
-5. **Aplicar seed Wireset** (opcional): `supabase/seeds/seed_wireset_produtos.sql`
-6. **Frete real**: integrar API Melhor Envio ou Correios quando disponível
-7. Quando chaves disponíveis: US-13 (Stripe) + US-14 (Brevo) + Épico 10
+1. **Supabase SQL Editor** — aplicar migrations `20260507000002`, `000003`, `000004`
+2. **Brevo Blocklist** — verificar app.brevo.com → Contacts → Blocklist para os 2 e-mails que não chegaram
+3. **Deploy produção** — `git pull && pnpm build && pm2 restart a2tech` em `91.99.217.157`
+4. **Aplicar seeds pendentes**: `seed_pedidos_fake.sql`
+5. **Configurar WhatsApp**: `/admin/site` → aba WhatsApp → número real
+6. **Frete real**: quando tiver credenciais Melhor Envio/Correios + pesos dos produtos cadastrados
+7. **US-13 + US-14**: implementar checkout Stripe + e-mail confirmação (chaves já configuradas)
 
 ---
 
@@ -195,17 +210,18 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 ### Ambiente: `.env`
 
 **Configuradas** ✅
-- `VITE_SUPABASE_URL` — Supabase (já funciona)
-- `VITE_SUPABASE_ANON_KEY` — Supabase (já funciona)
-- `VITE_APP_ENV=development`
-- `VITE_APP_URL=http://localhost:3000`
+- `VITE_SUPABASE_URL` — Supabase
+- `VITE_SUPABASE_ANON_KEY` — Supabase
+- `VITE_APP_ENV=production`
+- `VITE_APP_URL=https://www.a2brasilsupplies.com.br`
+- `BREVO_API_KEY` — Brevo (configurada em `.env` e como secret Supabase)
+- `VITE_STRIPE_PUBLISHABLE_KEY` — Stripe (test mode)
+- `STRIPE_SECRET_KEY` — Stripe (test mode)
 
-**Pendentes** 🟡 (Adicionar quando tiver as chaves)
-- `VITE_STRIPE_PUBLISHABLE_KEY` — Stripe (placeholder atual)
-- `STRIPE_SECRET_KEY` — Stripe (backend)
-- `BREVO_API_KEY` — Brevo para e-mails
+**Pendentes** 🟡
 - `N8N_WEBHOOK_URL` — n8n self-hosted (quando configurado)
 - `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` — WhatsApp (opcional, Evolution API é alternativa)
+- Chaves Stripe **produção** (hoje estão em test mode)
 
 **Nunca commitar** ❌
 - Qualquer chave real no repositório
@@ -352,7 +368,6 @@ Salvo em: `C:\Users\rlcun\.claude\projects\C--Projetos-a2tech\memory\sessao_atua
 
 ---
 
-**Última atualização**: 2026-04-10  
-**Versão**: Fase 1 Final (US-13 + US-14 em planejamento)  
-**Lido**: PRD completo + plan_fase_2.md + plan_fase_3.md  
-**Explorado**: Estrutura completa do código (patterns, services, DB schema)
+**Última atualização**: 2026-05-07  
+**Versão**: Fase 2 parcial (Épicos 7, 8, 9 concluídos — US-21 enviando, investigar suppression Brevo)  
+**Commit**: ver `git log --oneline -5`
