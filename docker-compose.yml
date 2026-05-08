@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  frontend:
+    build: .
+    image: A2:latest
+    container_name: A2
+    environment:
+      - NODE_ENV=production
+      - DEBUG=false
+    expose:
+      - 80
+    restart: unless-stopped
+    deploy:
+      replicas: 1
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.A2.rule=Host(`www.A2brasilsupplies.com.br`)"
+        - "traefik.http.routers.A2.entrypoints=websecure"
+        - "traefik.http.routers.A2.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.A2.loadbalancer.server.port=80"
+        - "traefik.http.routers.A2.priority=1"
+        - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
+        - "traefik.http.services.A2.loadbalancer.passHostHeader=true"
+        - "traefik.http.routers.A2.middlewares=sslheader"
+    networks:
+      - rede_mibi
+
+networks:
+  rede_mibi:
+    external: true
