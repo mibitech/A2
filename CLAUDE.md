@@ -319,7 +319,7 @@ Ferramentas para integração com serviços externos. Claude pode usar MCPs para
 - `fornecedores` — Sellers (FitaCabo, Wireset)
 - `produtos` — Catálogo com `fornecedor_id` + `ativo` (feature flag)
 - `usuarios` — Clientes + staff (role: client, employee, admin)
-- `pedidos` — Vendas com status (pending/paid/cancelled/delivered)
+- `pedidos` — Vendas com status (`pendente` → `pago` → `processando` → `enviado` → `entregue` | `cancelado`)
 - `itens_pedido` — Linhas de pedido (snapshot do preço)
 - `movimentacoes_estoque` — Histórico completo de entrada/saída
 - `campanhas_crm` — Campanhas de e-mail com segmento

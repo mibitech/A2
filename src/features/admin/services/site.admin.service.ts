@@ -44,27 +44,35 @@ export interface SobreImagem {
 // =====================================================
 
 export async function getHeroSlides(): Promise<{ slides: HeroSlide[]; error: string | null }> {
-  const { data, error } = await supabase
-    .from('hero_slides')
-    .select('*')
-    .order('ordem')
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10_000)
+    const { data, error } = await supabase
+      .from('hero_slides')
+      .select('*')
+      .order('ordem')
+      .abortSignal(controller.signal)
+      .then(r => { clearTimeout(timeoutId); return r }) as { data: any[] | null; error: { message: string } | null }
 
-  if (error) return { slides: [], error: error.message }
+    if (error) return { slides: [], error: error.message }
 
-  const slides: HeroSlide[] = ((data ?? []) as any[]).map(s => ({
-    id: s.id,
-    titulo: s.titulo,
-    subtitulo: s.subtitulo,
-    badge: s.badge,
-    ctaTexto: s.cta_texto,
-    ctaUrl: s.cta_url,
-    imagemUrl: s.imagem_url,
-    ordem: s.ordem,
-    ativo: s.ativo,
-    createdAt: s.created_at,
-  }))
+    const slides: HeroSlide[] = ((data ?? []) as any[]).map(s => ({
+      id: s.id,
+      titulo: s.titulo,
+      subtitulo: s.subtitulo,
+      badge: s.badge,
+      ctaTexto: s.cta_texto,
+      ctaUrl: s.cta_url,
+      imagemUrl: s.imagem_url,
+      ordem: s.ordem,
+      ativo: s.ativo,
+      createdAt: s.created_at,
+    }))
 
-  return { slides, error: null }
+    return { slides, error: null }
+  } catch {
+    return { slides: [], error: 'Erro ao buscar slides' }
+  }
 }
 
 export async function criarHeroSlide(payload: {
@@ -156,11 +164,15 @@ export async function getConteudoPorSecao(
   secao: SecaoConteudo
 ): Promise<{ itens: ConteudoItem[]; mapa: ConteudoMap; error: string | null }> {
   try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10_000)
     const { data, error } = await supabase
       .from('conteudo_site')
       .select('*')
       .eq('secao', secao)
       .order('chave')
+      .abortSignal(controller.signal)
+      .then(r => { clearTimeout(timeoutId); return r }) as { data: any[] | null; error: { message: string } | null }
 
     if (error) return { itens: [], mapa: {}, error: error.message }
 
@@ -206,22 +218,30 @@ export async function salvarConteudoLote(
 // =====================================================
 
 export async function getSobreGaleria(): Promise<{ imagens: SobreImagem[]; error: string | null }> {
-  const { data, error } = await supabase
-    .from('sobre_galeria')
-    .select('*')
-    .order('ordem')
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10_000)
+    const { data, error } = await supabase
+      .from('sobre_galeria')
+      .select('*')
+      .order('ordem')
+      .abortSignal(controller.signal)
+      .then(r => { clearTimeout(timeoutId); return r }) as { data: any[] | null; error: { message: string } | null }
 
-  if (error) return { imagens: [], error: error.message }
+    if (error) return { imagens: [], error: error.message }
 
-  const imagens: SobreImagem[] = ((data ?? []) as any[]).map(i => ({
-    id: i.id,
-    url: i.url,
-    alt: i.alt,
-    ordem: i.ordem,
-    ativo: i.ativo,
-  }))
+    const imagens: SobreImagem[] = ((data ?? []) as any[]).map(i => ({
+      id: i.id,
+      url: i.url,
+      alt: i.alt,
+      ordem: i.ordem,
+      ativo: i.ativo,
+    }))
 
-  return { imagens, error: null }
+    return { imagens, error: null }
+  } catch {
+    return { imagens: [], error: 'Erro ao buscar galeria' }
+  }
 }
 
 export async function adicionarSobreImagem(

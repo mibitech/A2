@@ -47,10 +47,14 @@ export interface Campanha {
 
 export async function getCampanhasTemplates(): Promise<{ templates: CampanhaTemplate[]; error: string | null }> {
   try {
-    const { data, error } = await supabase
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10_000)
+    const { data, error } = await (supabase
       .from('campanhas_templates' as never)
       .select('*')
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false }) as any)
+      .abortSignal(controller.signal)
+      .then((r: any) => { clearTimeout(timeoutId); return r })
 
     if (error) return { templates: [], error: (error as any).message }
 
@@ -161,10 +165,14 @@ export async function excluirTemplate(id: string): Promise<{ error: string | nul
 
 export async function getCampanhas(): Promise<{ campanhas: Campanha[]; error: string | null }> {
   try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10_000)
     const { data, error } = await supabase
       .from('campanhas_crm')
       .select('*, campanhas_templates:template_id(titulo)')
       .order('created_at', { ascending: false })
+      .abortSignal(controller.signal)
+      .then(r => { clearTimeout(timeoutId); return r }) as { data: any[] | null; error: { message: string } | null }
 
     if (error) return { campanhas: [], error: error.message }
 
