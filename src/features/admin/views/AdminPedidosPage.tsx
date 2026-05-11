@@ -433,7 +433,7 @@ export default function AdminPedidosPage() {
       </div>
 
       {/* Filtros */}
-      <div className="flex gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
         <input
           type="text"
           placeholder="Buscar por cliente ou nº do pedido..."
@@ -465,7 +465,9 @@ export default function AdminPedidosPage() {
           <p className="text-sm text-neutral-400">Nenhum pedido encontrado</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+        <>
+        {/* Desktop */}
+        <div className="hidden md:block overflow-hidden rounded-xl border border-neutral-200 bg-white">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50">
@@ -474,7 +476,7 @@ export default function AdminPedidosPage() {
                 <ThSort label="Status" col="status" current={sortKey} dir={sortDir} onSort={toggleSort} align="center" />
                 <ThSort label="Total" col="total" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
                 <ThSort label="Data" col="data" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
-                <th className="px-4 py-3 text-right font-medium text-neutral-600"></th>
+                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
@@ -483,26 +485,23 @@ export default function AdminPedidosPage() {
                   <td className="px-4 py-3">
                     <p className="font-mono text-xs text-neutral-500">#{p.id.slice(0, 8).toUpperCase()}</p>
                   </td>
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-neutral-800">{p.usuario?.nomeCompleto || '—'}</p>
-                    <p className="text-xs text-neutral-400">{p.usuario?.email}</p>
+                  <td className="px-4 py-3 max-w-[180px]">
+                    <p className="font-medium text-neutral-800 truncate" title={p.usuario?.nomeCompleto || ''}>{p.usuario?.nomeCompleto || '—'}</p>
+                    <p className="text-xs text-neutral-400 truncate" title={p.usuario?.email || ''}>{p.usuario?.email}</p>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLOR[p.status]}`}>
                       {STATUS_LABEL[p.status]}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-neutral-800">
+                  <td className="px-4 py-3 text-right font-medium text-neutral-800 whitespace-nowrap">
                     {p.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </td>
-                  <td className="px-4 py-3 text-right text-xs text-neutral-400">
+                  <td className="px-4 py-3 text-right text-xs text-neutral-400 whitespace-nowrap">
                     {new Date(p.createdAt).toLocaleDateString('pt-BR')}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => setPedidoSelecionado(p)}
-                      className="rounded-lg px-3 py-1.5 text-xs font-medium text-brand hover:bg-brand-50 transition-colors"
-                    >
+                    <button onClick={() => setPedidoSelecionado(p)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-brand hover:bg-brand-50 transition-colors">
                       Ver detalhes
                     </button>
                   </td>
@@ -510,14 +509,39 @@ export default function AdminPedidosPage() {
               ))}
             </tbody>
           </table>
-          <Pagination
-            total={pedidosFiltrados.length}
-            page={page}
-            pageSize={pageSize}
-            onPage={setPage}
-            onPageSize={s => { setPageSize(s); setPage(1) }}
-          />
+          <Pagination total={pedidosFiltrados.length} page={page} pageSize={pageSize} onPage={setPage} onPageSize={s => { setPageSize(s); setPage(1) }} />
         </div>
+
+        {/* Mobile — cards */}
+        <div className="md:hidden space-y-3">
+          {pedidosPaginados.map(p => (
+            <div key={p.id} className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="min-w-0">
+                  <p className="font-medium text-neutral-800 truncate">{p.usuario?.nomeCompleto || '—'}</p>
+                  <p className="text-xs text-neutral-400 truncate">{p.usuario?.email}</p>
+                </div>
+                <span className={`shrink-0 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLOR[p.status]}`}>
+                  {STATUS_LABEL[p.status]}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-neutral-400 mb-3">
+                <span className="font-mono">#{p.id.slice(0, 8).toUpperCase()}</span>
+                <span>{new Date(p.createdAt).toLocaleDateString('pt-BR')}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-neutral-800">
+                  {p.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </span>
+                <button onClick={() => setPedidoSelecionado(p)} className="rounded-lg border border-brand/30 px-3 py-1.5 text-xs font-medium text-brand hover:bg-brand-50 transition-colors">
+                  Ver detalhes
+                </button>
+              </div>
+            </div>
+          ))}
+          <Pagination total={pedidosFiltrados.length} page={page} pageSize={pageSize} onPage={setPage} onPageSize={s => { setPageSize(s); setPage(1) }} />
+        </div>
+        </>
       )}
 
       {/* Modal Detalhes */}

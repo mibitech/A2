@@ -578,7 +578,7 @@ export default function AdminEstoquePage() {
       )}
 
       {/* Filtros */}
-      <div className="flex gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
         <input
           type="text"
           placeholder="Buscar por nome ou SKU..."
@@ -586,20 +586,22 @@ export default function AdminEstoquePage() {
           onChange={e => { setBusca(e.target.value); setPage(1) }}
           className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
         />
-        <select
-          value={filtroStatus}
-          onChange={e => { setFiltroStatus(e.target.value as typeof filtroStatus); setPage(1) }}
-          className="rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-        >
-          <option value="todos">Todos</option>
-          <option value="ativo">Ativos</option>
-          <option value="inativo">Inativos</option>
-        </select>
-        <button onClick={() => reload()} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors">
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-        </button>
+        <div className="flex gap-2">
+          <select
+            value={filtroStatus}
+            onChange={e => { setFiltroStatus(e.target.value as typeof filtroStatus); setPage(1) }}
+            className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+          >
+            <option value="todos">Todos</option>
+            <option value="ativo">Ativos</option>
+            <option value="inativo">Inativos</option>
+          </select>
+          <button onClick={() => reload()} className="rounded-lg border border-neutral-300 px-3 py-2 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors">
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Tabela */}
@@ -614,7 +616,9 @@ export default function AdminEstoquePage() {
           <p className="text-sm text-neutral-400">Nenhum produto encontrado</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+        <>
+        {/* Desktop */}
+        <div className="hidden md:block overflow-hidden rounded-xl border border-neutral-200 bg-white">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50">
@@ -632,85 +636,45 @@ export default function AdminEstoquePage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       {p.imagens[0] ? (
-                        <img src={p.imagens[0]} alt={p.nome} className="h-10 w-10 rounded-lg object-cover border border-neutral-200" />
+                        <img src={p.imagens[0]} alt={p.nome} className="h-10 w-10 shrink-0 rounded-lg object-cover border border-neutral-200" />
                       ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 text-neutral-400">
-                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-400">
+                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                         </div>
                       )}
-                      <div>
-                        <p className="font-medium text-neutral-800">{p.nome}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium text-neutral-800 truncate" title={p.nome}>{p.nome}</p>
                         {p.sku && <p className="text-xs text-neutral-400">SKU: {p.sku}</p>}
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-neutral-600">{p.categoria}</td>
-                  <td className="px-4 py-3 text-right">
-                    <p className="font-medium text-neutral-800">
-                      {p.preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                    </p>
-                    {p.precoPromocional && (
-                      <p className="text-xs text-green-600">
-                        {p.precoPromocional.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                      </p>
-                    )}
+                  <td className="px-4 py-3 text-neutral-600 whitespace-nowrap">{p.categoria}</td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    <p className="font-medium text-neutral-800">{p.preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                    {p.precoPromocional && <p className="text-xs text-green-600">{p.precoPromocional.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <span className={`font-medium ${p.estoque <= 5 ? 'text-amber-600' : 'text-neutral-800'}`}>
-                      {p.estoque}
-                    </span>
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    <span className={`font-medium ${p.estoque <= 5 ? 'text-amber-600' : 'text-neutral-800'}`}>{p.estoque}</span>
                     <span className="text-neutral-400"> un.</span>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${p.ativo ? 'bg-green-100 text-green-700' : 'bg-neutral-100 text-neutral-500'}`}>
-                      {p.ativo ? 'Ativo' : 'Inativo'}
-                    </span>
-                    {p.destaque && (
-                      <span className="ml-1 inline-flex items-center rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700">
-                        Destaque
-                      </span>
-                    )}
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${p.ativo ? 'bg-green-100 text-green-700' : 'bg-neutral-100 text-neutral-500'}`}>{p.ativo ? 'Ativo' : 'Inativo'}</span>
+                    {p.destaque && <span className="ml-1 inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">Destaque</span>}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => setModalHistorico(p)}
-                        title="Histórico de estoque"
-                        className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
-                      >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
+                      <button onClick={() => setModalHistorico(p)} title="Histórico" className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors">
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                       </button>
-                      <button
-                        onClick={() => setModalAjuste(p)}
-                        title="Ajustar estoque"
-                        className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
-                      >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                        </svg>
+                      <button onClick={() => setModalAjuste(p)} title="Ajustar estoque" className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors">
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
                       </button>
-                      <button
-                        onClick={() => setModalForm({ aberto: true, produto: p })}
-                        title="Editar"
-                        className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
-                      >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
+                      <button onClick={() => setModalForm({ aberto: true, produto: p })} title="Editar" className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors">
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                       </button>
                       {p.ativo && (
-                        <button
-                          onClick={() => handleRemove(p)}
-                          title="Desativar"
-                          className="rounded-lg p-1.5 text-neutral-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                        >
-                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                          </svg>
+                        <button onClick={() => handleRemove(p)} title="Desativar" className="rounded-lg p-1.5 text-neutral-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
                         </button>
                       )}
                     </div>
@@ -719,14 +683,50 @@ export default function AdminEstoquePage() {
               ))}
             </tbody>
           </table>
-          <Pagination
-            total={produtosFiltrados.length}
-            page={page}
-            pageSize={pageSize}
-            onPage={setPage}
-            onPageSize={s => { setPageSize(s); setPage(1) }}
-          />
+          <Pagination total={produtosFiltrados.length} page={page} pageSize={pageSize} onPage={setPage} onPageSize={s => { setPageSize(s); setPage(1) }} />
         </div>
+
+        {/* Mobile — cards */}
+        <div className="md:hidden space-y-3">
+          {produtosPaginados.map(p => (
+            <div key={p.id} className="rounded-xl border border-neutral-200 bg-white p-4">
+              <div className="flex items-start gap-3 mb-3">
+                {p.imagens[0] ? (
+                  <img src={p.imagens[0]} alt={p.nome} className="h-14 w-14 shrink-0 rounded-lg object-cover border border-neutral-200" />
+                ) : (
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-300">
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-neutral-800 leading-snug">{p.nome}</p>
+                  <p className="text-xs text-neutral-400 mt-0.5">{p.categoria}{p.sku ? ` · SKU: ${p.sku}` : ''}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${p.ativo ? 'bg-green-100 text-green-700' : 'bg-neutral-100 text-neutral-500'}`}>{p.ativo ? 'Ativo' : 'Inativo'}</span>
+                    {p.destaque && <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">Destaque</span>}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mb-3 text-sm">
+                <div>
+                  <p className="font-semibold text-neutral-800">{p.preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                  {p.precoPromocional && <p className="text-xs text-green-600">{p.precoPromocional.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>}
+                </div>
+                <div className="text-right">
+                  <p className={`font-semibold ${p.estoque <= 5 ? 'text-amber-600' : 'text-neutral-700'}`}>{p.estoque} un.</p>
+                  {p.estoque <= 5 && <p className="text-xs text-amber-500">Estoque baixo</p>}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-3 border-t border-neutral-100">
+                <button onClick={() => setModalHistorico(p)} className="flex-1 rounded-lg border border-neutral-200 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition-colors">Histórico</button>
+                <button onClick={() => setModalAjuste(p)} className="flex-1 rounded-lg border border-neutral-200 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition-colors">Ajustar</button>
+                <button onClick={() => setModalForm({ aberto: true, produto: p })} className="flex-1 rounded-lg bg-brand py-1.5 text-xs font-medium text-white hover:bg-brand-dark transition-colors">Editar</button>
+              </div>
+            </div>
+          ))}
+          <Pagination total={produtosFiltrados.length} page={page} pageSize={pageSize} onPage={setPage} onPageSize={s => { setPageSize(s); setPage(1) }} />
+        </div>
+        </>
       )}
 
       {/* Modais */}

@@ -406,6 +406,22 @@ export default function AdminFinanceiroPage() {
   const [feedbackExcluir, setFeedbackExcluir] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
+  const [sortKey, setSortKey] = useState<'data' | 'valor' | 'categoria'>('data')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+
+  function toggleSort(col: typeof sortKey) {
+    if (sortKey === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortKey(col); setSortDir(col === 'data' ? 'desc' : 'asc') }
+    setPage(1)
+  }
+
+  const lancamentosOrdenados = [...lancamentos].sort((a, b) => {
+    const m = sortDir === 'asc' ? 1 : -1
+    if (sortKey === 'data') return m * a.dataRef.localeCompare(b.dataRef)
+    if (sortKey === 'valor') return m * (a.valor - b.valor)
+    if (sortKey === 'categoria') return m * a.categoria.localeCompare(b.categoria, 'pt-BR')
+    return 0
+  })
 
   async function handleExcluir(l: LancamentoCaixa) {
     if (!confirm(`Excluir "${l.descricao}"?`)) return
@@ -555,61 +571,95 @@ export default function AdminFinanceiroPage() {
               </button>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-neutral-200 bg-neutral-50">
-                    <th className="px-4 py-3 text-left font-medium text-neutral-600">Data</th>
-                    <th className="px-4 py-3 text-left font-medium text-neutral-600">Descrição</th>
-                    <th className="px-4 py-3 text-left font-medium text-neutral-600">Categoria</th>
-                    <th className="px-4 py-3 text-center font-medium text-neutral-600">Tipo</th>
-                    <th className="px-4 py-3 text-right font-medium text-neutral-600">Valor</th>
-                    <th className="px-4 py-3 text-right font-medium text-neutral-600"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-100">
-                  {lancamentos.slice((page - 1) * pageSize, page * pageSize).map(l => (
-                    <tr key={l.id} className="hover:bg-neutral-50 transition-colors">
-                      <td className="px-4 py-3 text-xs text-neutral-500 whitespace-nowrap">{fmtData(l.dataRef)}</td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-neutral-800">{l.descricao}</p>
-                        {l.observacoes && <p className="text-xs text-neutral-400">{l.observacoes}</p>}
-                      </td>
-                      <td className="px-4 py-3 text-xs text-neutral-500 capitalize">{l.categoria}</td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                          l.tipo === 'entrada' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                        }`}>
-                          {l.tipo === 'entrada' ? '+ Entrada' : '− Saída'}
-                        </span>
-                      </td>
-                      <td className={`px-4 py-3 text-right font-semibold ${
-                        l.tipo === 'entrada' ? 'text-green-700' : 'text-red-700'
-                      }`}>
-                        {l.tipo === 'saida' ? '−' : '+'} {fmtBRL(l.valor)}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button onClick={() => handleExcluir(l)} disabled={excluindo === l.id}
-                          className="rounded p-1 text-neutral-300 hover:text-red-500 disabled:opacity-50 transition-colors"
-                          aria-label="Excluir">
-                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </td>
+            <>
+              {/* Desktop */}
+              <div className="hidden md:block overflow-hidden rounded-xl border border-neutral-200 bg-white">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-neutral-200 bg-neutral-50">
+                      {([
+                        { label: 'Data', col: 'data', align: 'left' },
+                        { label: 'Descrição', col: null, align: 'left' },
+                        { label: 'Categoria', col: 'categoria', align: 'left' },
+                        { label: 'Tipo', col: null, align: 'center' },
+                        { label: 'Valor', col: 'valor', align: 'right' },
+                        { label: '', col: null, align: 'right' },
+                      ] as const).map(({ label, col, align }) =>
+                        col ? (
+                          <th key={label || 'acoes'} onClick={() => toggleSort(col)}
+                            className={`cursor-pointer select-none px-4 py-3 text-${align} font-medium text-neutral-600 hover:text-neutral-900`}>
+                            <span className="inline-flex items-center gap-1">{label}
+                              <span className={`text-xs ${sortKey === col ? 'text-brand' : 'text-neutral-300'}`}>
+                                {sortKey === col ? (sortDir === 'asc' ? '↑' : '↓') : '↕'}
+                              </span>
+                            </span>
+                          </th>
+                        ) : (
+                          <th key={label || 'acoes2'} className={`px-4 py-3 text-${align} font-medium text-neutral-600`}>{label}</th>
+                        )
+                      )}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              <Pagination
-                total={lancamentos.length}
-                page={page}
-                pageSize={pageSize}
-                onPage={setPage}
-                onPageSize={s => { setPageSize(s); setPage(1) }}
-              />
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100">
+                    {lancamentosOrdenados.slice((page - 1) * pageSize, page * pageSize).map(l => (
+                      <tr key={l.id} className="hover:bg-neutral-50 transition-colors">
+                        <td className="px-4 py-3 text-xs text-neutral-500 whitespace-nowrap">{fmtData(l.dataRef)}</td>
+                        <td className="px-4 py-3 max-w-[220px]">
+                          <p className="font-medium text-neutral-800 truncate" title={l.descricao}>{l.descricao}</p>
+                          {l.observacoes && <p className="text-xs text-neutral-400 truncate">{l.observacoes}</p>}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-neutral-500 capitalize whitespace-nowrap">{l.categoria}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${l.tipo === 'entrada' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {l.tipo === 'entrada' ? '+ Entrada' : '− Saída'}
+                          </span>
+                        </td>
+                        <td className={`px-4 py-3 text-right font-semibold whitespace-nowrap ${l.tipo === 'entrada' ? 'text-green-700' : 'text-red-700'}`}>
+                          {l.tipo === 'saida' ? '−' : '+'} {fmtBRL(l.valor)}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button onClick={() => handleExcluir(l)} disabled={excluindo === l.id} className="rounded p-1 text-neutral-300 hover:text-red-500 disabled:opacity-50 transition-colors" aria-label="Excluir">
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <Pagination total={lancamentosOrdenados.length} page={page} pageSize={pageSize} onPage={setPage} onPageSize={s => { setPageSize(s); setPage(1) }} />
+              </div>
+
+              {/* Mobile — cards */}
+              <div className="md:hidden space-y-3">
+                {lancamentosOrdenados.slice((page - 1) * pageSize, page * pageSize).map(l => (
+                  <div key={l.id} className="rounded-xl border border-neutral-200 bg-white p-4">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <div className="min-w-0">
+                        <p className="font-medium text-neutral-800">{l.descricao}</p>
+                        {l.observacoes && <p className="text-xs text-neutral-400 mt-0.5">{l.observacoes}</p>}
+                      </div>
+                      <span className={`shrink-0 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${l.tipo === 'entrada' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {l.tipo === 'entrada' ? 'Entrada' : 'Saída'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="text-xs text-neutral-400">
+                        <span className="capitalize">{l.categoria}</span> · <span>{fmtData(l.dataRef)}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className={`font-semibold text-sm ${l.tipo === 'entrada' ? 'text-green-700' : 'text-red-700'}`}>
+                          {l.tipo === 'saida' ? '−' : '+'} {fmtBRL(l.valor)}
+                        </span>
+                        <button onClick={() => handleExcluir(l)} disabled={excluindo === l.id} className="rounded p-1 text-neutral-300 hover:text-red-500 disabled:opacity-50">
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <Pagination total={lancamentosOrdenados.length} page={page} pageSize={pageSize} onPage={setPage} onPageSize={s => { setPageSize(s); setPage(1) }} />
+              </div>
+            </>
           )}
         </>
       )}

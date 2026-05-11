@@ -618,6 +618,9 @@ export default function AdminClientesPage() {
     if (sortCampanha === 'enviados') return m * (a.totalEnviados - b.totalEnviados)
     return m * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
   })
+  const [pageCamp, setPageCamp] = useState(1)
+  const [pageSizeCamp, setPageSizeCamp] = useState(20)
+  const campanhasPaginadas = campanhasOrdenadas.slice((pageCamp - 1) * pageSizeCamp, pageCamp * pageSizeCamp)
   const [pageSize, setPageSize] = useState(20)
 
   function toggleSort(col: SortKeyClientes) {
@@ -699,89 +702,95 @@ export default function AdminClientesPage() {
               <button onClick={() => setShowCampanha(true)} className="mt-3 text-sm text-brand hover:underline">Criar primeira campanha</button>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-neutral-200 bg-neutral-50">
-                    {([
-                      { label: 'Título', col: 'titulo', align: 'left' },
-                      { label: 'Segmento', col: null, align: 'left' },
-                      { label: 'Enviados', col: 'enviados', align: 'center' },
-                      { label: 'Status', col: 'status', align: 'center' },
-                      { label: 'Data', col: 'data', align: 'right' },
-                      { label: 'Ações', col: null, align: 'center' },
-                    ] as const).map(({ label, col, align }) =>
-                      col ? (
-                        <th key={label} onClick={() => toggleSortCampanha(col)}
-                          className={`cursor-pointer select-none px-4 py-3 text-${align} font-medium text-neutral-600 hover:text-neutral-900`}>
-                          <span className="inline-flex items-center gap-1">
-                            {label}
-                            <span className={`text-xs ${sortCampanha === col ? 'text-brand' : 'text-neutral-300'}`}>
-                              {sortCampanha === col ? (sortCampanhaDir === 'asc' ? '↑' : '↓') : '↕'}
+            <>
+              {/* Desktop */}
+              <div className="hidden md:block overflow-hidden rounded-xl border border-neutral-200 bg-white">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-neutral-200 bg-neutral-50">
+                      {([
+                        { label: 'Título', col: 'titulo', align: 'left' },
+                        { label: 'Segmento', col: null, align: 'left' },
+                        { label: 'Enviados', col: 'enviados', align: 'center' },
+                        { label: 'Status', col: 'status', align: 'center' },
+                        { label: 'Data', col: 'data', align: 'right' },
+                        { label: 'Ações', col: null, align: 'center' },
+                      ] as const).map(({ label, col, align }) =>
+                        col ? (
+                          <th key={label} onClick={() => toggleSortCampanha(col)}
+                            className={`cursor-pointer select-none px-4 py-3 text-${align} font-medium text-neutral-600 hover:text-neutral-900`}>
+                            <span className="inline-flex items-center gap-1">{label}
+                              <span className={`text-xs ${sortCampanha === col ? 'text-brand' : 'text-neutral-300'}`}>
+                                {sortCampanha === col ? (sortCampanhaDir === 'asc' ? '↑' : '↓') : '↕'}
+                              </span>
                             </span>
-                          </span>
-                        </th>
-                      ) : (
-                        <th key={label} className={`px-4 py-3 text-${align} font-medium text-neutral-600`}>{label}</th>
-                      )
-                    )}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-100">
-                  {campanhasOrdenadas.map(c => (
-                    <tr key={c.id} className="hover:bg-neutral-50">
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-neutral-800">{c.titulo}</p>
-                        <p className="text-xs text-neutral-400">{c.assunto}</p>
-                      </td>
-                      <td className="px-4 py-3 text-neutral-600">
-                        {c.segmento === 'todos' ? 'Todos' : c.segmento === 'clientes' ? 'Clientes' : `Tag: ${c.tagFiltro}`}
-                      </td>
-                      <td className="px-4 py-3 text-center font-medium text-neutral-700">{c.totalEnviados}</td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                          c.status === 'enviada' ? 'bg-green-100 text-green-700' :
-                          c.status === 'erro' ? 'bg-red-100 text-red-700' :
-                          c.status === 'enviando' ? 'bg-blue-100 text-blue-700' :
-                          'bg-neutral-100 text-neutral-600'
-                        }`}>{c.status}</span>
-                      </td>
-                      <td className="px-4 py-3 text-right text-xs text-neutral-400">
-                        {new Date(c.createdAt).toLocaleDateString('pt-BR')}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            onClick={() => { setCampanhaReenvio(c); setShowCampanha(true) }}
-                            title="Reenviar campanha"
-                            className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 px-2.5 py-1 text-xs font-medium text-neutral-600 hover:border-brand hover:text-brand transition-colors"
-                          >
-                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                            </svg>
-                            Reenviar
-                          </button>
-                          <button
-                            onClick={() => { if (window.confirm(`Excluir a campanha "${c.titulo}"?`)) handleDeleteCampanha(c.id) }}
-                            disabled={deletandoCampanha === c.id}
-                            title="Excluir campanha"
-                            className="inline-flex items-center rounded-lg border border-neutral-200 px-2 py-1 text-xs font-medium text-red-500 hover:border-red-300 hover:bg-red-50 transition-colors disabled:opacity-40"
-                          >
-                            {deletandoCampanha === c.id ? (
-                              <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-                            ) : (
-                              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                              </svg>
-                            )}
-                          </button>
-                        </div>
-                      </td>
+                          </th>
+                        ) : (
+                          <th key={label} className={`px-4 py-3 text-${align} font-medium text-neutral-600`}>{label}</th>
+                        )
+                      )}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-100">
+                    {campanhasPaginadas.map(c => {
+                      const segLabel = c.segmento === 'todos' ? 'Todos' : c.segmento === 'clientes' ? 'Clientes' : `Tag: ${c.tagFiltro}`
+                      const statusCls = c.status === 'enviada' ? 'bg-green-100 text-green-700' : c.status === 'erro' ? 'bg-red-100 text-red-700' : c.status === 'enviando' ? 'bg-blue-100 text-blue-700' : 'bg-neutral-100 text-neutral-600'
+                      return (
+                        <tr key={c.id} className="hover:bg-neutral-50">
+                          <td className="px-4 py-3 max-w-[200px]">
+                            <p className="font-medium text-neutral-800 truncate" title={c.titulo}>{c.titulo}</p>
+                            <p className="text-xs text-neutral-400 truncate">{c.assunto}</p>
+                          </td>
+                          <td className="px-4 py-3 text-neutral-600 whitespace-nowrap">{segLabel}</td>
+                          <td className="px-4 py-3 text-center font-medium text-neutral-700">{c.totalEnviados}</td>
+                          <td className="px-4 py-3 text-center"><span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusCls}`}>{c.status}</span></td>
+                          <td className="px-4 py-3 text-right text-xs text-neutral-400 whitespace-nowrap">{new Date(c.createdAt).toLocaleDateString('pt-BR')}</td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button onClick={() => { setCampanhaReenvio(c); setShowCampanha(true) }} className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 px-2.5 py-1 text-xs font-medium text-neutral-600 hover:border-brand hover:text-brand transition-colors">
+                                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                Reenviar
+                              </button>
+                              <button onClick={() => { if (window.confirm(`Excluir "${c.titulo}"?`)) handleDeleteCampanha(c.id) }} disabled={deletandoCampanha === c.id} className="inline-flex items-center rounded-lg border border-neutral-200 px-2 py-1 text-xs font-medium text-red-500 hover:border-red-300 hover:bg-red-50 transition-colors disabled:opacity-40">
+                                {deletandoCampanha === c.id ? <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                                  : <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+                <Pagination total={campanhasOrdenadas.length} page={pageCamp} pageSize={pageSizeCamp} onPage={setPageCamp} onPageSize={s => { setPageSizeCamp(s); setPageCamp(1) }} />
+              </div>
+
+              {/* Mobile — cards */}
+              <div className="md:hidden space-y-3">
+                {campanhasPaginadas.map(c => {
+                  const segLabel = c.segmento === 'todos' ? 'Todos' : c.segmento === 'clientes' ? 'Clientes' : `Tag: ${c.tagFiltro}`
+                  const statusCls = c.status === 'enviada' ? 'bg-green-100 text-green-700' : c.status === 'erro' ? 'bg-red-100 text-red-700' : c.status === 'enviando' ? 'bg-blue-100 text-blue-700' : 'bg-neutral-100 text-neutral-600'
+                  return (
+                    <div key={c.id} className="rounded-xl border border-neutral-200 bg-white p-4">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <p className="font-medium text-neutral-800 leading-snug">{c.titulo}</p>
+                        <span className={`shrink-0 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusCls}`}>{c.status}</span>
+                      </div>
+                      <p className="text-xs text-neutral-400 mb-2">{c.assunto}</p>
+                      <div className="flex items-center justify-between text-xs text-neutral-500 mb-3">
+                        <span>{segLabel} · {c.totalEnviados} enviados</span>
+                        <span>{new Date(c.createdAt).toLocaleDateString('pt-BR')}</span>
+                      </div>
+                      <div className="flex gap-2 pt-3 border-t border-neutral-100">
+                        <button onClick={() => { setCampanhaReenvio(c); setShowCampanha(true) }} className="flex-1 rounded-lg border border-neutral-200 py-2 text-xs font-medium text-neutral-600 hover:border-brand hover:text-brand transition-colors">Reenviar</button>
+                        <button onClick={() => { if (window.confirm(`Excluir "${c.titulo}"?`)) handleDeleteCampanha(c.id) }} disabled={deletandoCampanha === c.id} className="rounded-lg border border-neutral-200 px-3 py-2 text-xs font-medium text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40">Excluir</button>
+                      </div>
+                    </div>
+                  )
+                })}
+                <Pagination total={campanhasOrdenadas.length} page={pageCamp} pageSize={pageSizeCamp} onPage={setPageCamp} onPageSize={s => { setPageSizeCamp(s); setPageCamp(1) }} />
+              </div>
+            </>
           )}
         </div>
       )}
@@ -790,7 +799,7 @@ export default function AdminClientesPage() {
       {abaAtiva === 'clientes' && <>
 
       {/* Filtros */}
-      <div className="flex gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
         <input
           type="text"
           placeholder="Buscar por nome ou e-mail..."
@@ -810,7 +819,7 @@ export default function AdminClientesPage() {
         </select>
       </div>
 
-      {/* Tabela */}
+      {/* Tabela / Cards */}
       {isLoading ? (
         <div className="flex justify-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-200 border-t-brand" />
@@ -822,66 +831,83 @@ export default function AdminClientesPage() {
           <p className="text-sm text-neutral-400">Nenhum usuário encontrado</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-neutral-200 bg-neutral-50">
-                <ThSort label="Usuário" col="nome" current={sortKey} dir={sortDir} onSort={toggleSort} align="left" />
-                <th className="px-4 py-3 text-left font-medium text-neutral-600">Contato</th>
-                <th className="px-4 py-3 text-center font-medium text-neutral-600">Tipo</th>
-                <ThSort label="Acesso" col="role" current={sortKey} dir={sortDir} onSort={toggleSort} align="center" />
-                <ThSort label="Cadastro" col="cadastro" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
-                <th className="px-4 py-3 text-right font-medium text-neutral-600"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-100">
-              {clientesPaginados.map(c => (
-                <tr key={c.id} className="hover:bg-neutral-50 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-brand text-sm font-bold shrink-0">
-                        {(c.nomeCompleto || c.email).charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="font-medium text-neutral-800">{c.nomeCompleto || '—'}</p>
-                        <p className="text-xs text-neutral-400">{c.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-neutral-600">
-                    {c.telefone || <span className="text-neutral-300">—</span>}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="text-xs text-neutral-500 capitalize">{c.tipoPessoa}</span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${roleColor[c.role]}`}>
-                      {roleLabel[c.role]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right text-xs text-neutral-400">
-                    {new Date(c.createdAt).toLocaleDateString('pt-BR')}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => setClienteSelecionado(c)}
-                      className="rounded-lg px-3 py-1.5 text-xs font-medium text-brand hover:bg-brand-50 transition-colors"
-                    >
-                      Ver perfil
-                    </button>
-                  </td>
+        <>
+          {/* Desktop */}
+          <div className="hidden md:block overflow-hidden rounded-xl border border-neutral-200 bg-white">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-neutral-200 bg-neutral-50">
+                  <ThSort label="Usuário" col="nome" current={sortKey} dir={sortDir} onSort={toggleSort} align="left" />
+                  <th className="px-4 py-3 text-left font-medium text-neutral-600">Contato</th>
+                  <th className="px-4 py-3 text-center font-medium text-neutral-600">Tipo</th>
+                  <ThSort label="Acesso" col="role" current={sortKey} dir={sortDir} onSort={toggleSort} align="center" />
+                  <ThSort label="Cadastro" col="cadastro" current={sortKey} dir={sortDir} onSort={toggleSort} align="right" />
+                  <th className="px-4 py-3" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          <Pagination
-            total={clientesFiltrados.length}
-            page={page}
-            pageSize={pageSize}
-            onPage={setPage}
-            onPageSize={s => { setPageSize(s); setPage(1) }}
-          />
-        </div>
+              </thead>
+              <tbody className="divide-y divide-neutral-100">
+                {clientesPaginados.map(c => (
+                  <tr key={c.id} className="hover:bg-neutral-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand text-sm font-bold">
+                          {(c.nomeCompleto || c.email).charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-neutral-800 truncate" title={c.nomeCompleto || ''}>{c.nomeCompleto || '—'}</p>
+                          <p className="text-xs text-neutral-400 truncate" title={c.email}>{c.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-neutral-600 whitespace-nowrap">{c.telefone || <span className="text-neutral-300">—</span>}</td>
+                    <td className="px-4 py-3 text-center"><span className="text-xs text-neutral-500 capitalize">{c.tipoPessoa}</span></td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${roleColor[c.role]}`}>{roleLabel[c.role]}</span>
+                    </td>
+                    <td className="px-4 py-3 text-right text-xs text-neutral-400 whitespace-nowrap">{new Date(c.createdAt).toLocaleDateString('pt-BR')}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button onClick={() => setClienteSelecionado(c)} className="rounded-lg px-3 py-1.5 text-xs font-medium text-brand hover:bg-brand-50 transition-colors">Ver perfil</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <Pagination total={clientesFiltrados.length} page={page} pageSize={pageSize} onPage={setPage} onPageSize={s => { setPageSize(s); setPage(1) }} />
+          </div>
+
+          {/* Mobile — cards */}
+          <div className="md:hidden space-y-3">
+            {clientesPaginados.map(c => (
+              <div key={c.id} className="rounded-xl border border-neutral-200 bg-white p-4">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand font-bold">
+                      {(c.nomeCompleto || c.email).charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-neutral-800 truncate">{c.nomeCompleto || '—'}</p>
+                      <p className="text-xs text-neutral-400 truncate">{c.email}</p>
+                    </div>
+                  </div>
+                  <span className={`shrink-0 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${roleColor[c.role]}`}>{roleLabel[c.role]}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-neutral-400 mb-3">
+                  <span>{c.telefone || 'Sem telefone'}</span>
+                  <span>{new Date(c.createdAt).toLocaleDateString('pt-BR')}</span>
+                </div>
+                {c.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {c.tags.map(t => <span key={t} className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500">{t}</span>)}
+                  </div>
+                )}
+                <button onClick={() => setClienteSelecionado(c)} className="w-full rounded-lg border border-brand/30 py-2 text-sm font-medium text-brand hover:bg-brand-50 transition-colors">
+                  Ver perfil
+                </button>
+              </div>
+            ))}
+            <Pagination total={clientesFiltrados.length} page={page} pageSize={pageSize} onPage={setPage} onPageSize={s => { setPageSize(s); setPage(1) }} />
+          </div>
+        </>
       )}
 
       {/* Modal Perfil */}
