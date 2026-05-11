@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { garantirSessaoFresca, marcarInteracao } from '@lib/supabase/client'
 import * as productsService from '../services/products.service'
 import type {
   Product,
@@ -47,6 +48,9 @@ export function useProducts(initialFilters: ProductFilters = {}) {
         error: null,
       }))
 
+      // Reabre a conexão se estiver stale por inatividade longa
+      await garantirSessaoFresca()
+
       const { data, error } = await productsService.getProducts(filters, page)
 
       if (error) {
@@ -65,6 +69,7 @@ export function useProducts(initialFilters: ProductFilters = {}) {
       }
 
       if (data) {
+        marcarInteracao()
         setState((prev) => ({
           ...prev,
           products: data.products,
@@ -82,8 +87,10 @@ export function useProducts(initialFilters: ProductFilters = {}) {
 
   // Carregar categorias
   const loadCategories = useCallback(async () => {
+    await garantirSessaoFresca()
     const { data } = await productsService.getCategories()
     if (data) {
+      marcarInteracao()
       setState((prev) => ({ ...prev, categories: data }))
     }
   }, [])
