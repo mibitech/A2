@@ -95,7 +95,7 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 
 ---
 
-## 📌 Status do Projeto Hoje (2026-05-06)
+## 📌 Status do Projeto — v2.0.0 (2026-05-11)
 
 ### ✅ Concluído (Fase 1 — base)
 - Hero section + proposta de valor
@@ -105,10 +105,10 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - Tabelas de pedidos criadas no Supabase
 - Header com dropdown de conta (primeiro nome, Minha Conta, Painel Admin, Sair)
 - Rebranding completo: A2TECH → **A2** + **Brasil Supplies LTDA** (header, admin, auth, landing, footer, title)
-- ❌ **Checkout com Stripe (US-13) — NÃO IMPLEMENTADO**
-- ❌ **E-mail de confirmação com Brevo (US-14) — NÃO IMPLEMENTADO**
+- ❌ **Checkout com Stripe (US-13) — pendente** (chaves configuradas, falta Edge Function)
+- ❌ **E-mail de confirmação com Brevo (US-14) — pendente**
 
-### ✅ Concluído (Fase 2 — parcial)
+### ✅ Concluído (Fase 2 — COMPLETA 🎉) — tag v2.0.0
 
 #### Épico 7 — Controle de Acesso ✅
 - `is_admin()` e `is_staff()` com SECURITY DEFINER (anti-recursão)
@@ -126,33 +126,32 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - Tags: chips visuais, input com Enter, sugestões da base + salvar (RLS corrigido)
 - **Campanhas — sistema completo** (`/admin/campanhas`):
   - Aba Templates: CRUD com mini-preview (scale 35%), modal editor + toggle preview
-  - Aba Campanhas: tabela com filtros de status, ações por lifecycle
+  - Aba Campanhas: tabela com filtros de status, ações por lifecycle + paginação
   - Segmentos: todos / clientes / por_tag / lista_manual
   - Lista manual: textarea com parsing robusto, preview chips verde/laranja, deduplicação
   - Lifecycle: Enviando → Enviada → Arquivada; botão Reenviar gera novo registro
-  - Migrations: `20260507000001` (templates), `20260507000002` (lista_manual), `20260507000003` (status check), `20260507000004` (template apresentação)
 - Fix RLS: `20260506000002` — UPDATE em `usuarios` permite `is_staff()` (não só admin)
-- US-21 (envio real): Edge Function `send-campaign` deployada via CLI, BREVO_API_KEY configurada
-  → Brevo enviando mas com problema de suppression list nos testes — investigar em app.brevo.com → Contacts → Blocklist
+- US-21: Edge Function `send-campaign` com envio paralelo (`Promise.allSettled`), BREVO_API_KEY configurada
+  → Verificar app.brevo.com → Contacts → Blocklist se e-mails não chegarem
 
 #### Admin Pedidos ✅
-- `AdminPedidosPage`: tabela + cards de status + busca; DetalheModal com Itens, Entrega, Observações
+- `AdminPedidosPage`: tabela + cards mobile + busca; DetalheModal com Itens, Entrega, Observações
 - Fluxo de avanço de status manual (sem Stripe)
 - Ordenação clicável (Cliente, Status, Total, Data) + paginação
-- Seed de 10 pedidos fake em `supabase/seeds/seed_pedidos_fake.sql` (pendente aplicação)
+
+#### Integração Pedido → Caixa ✅
+- Pedido marcado como "pago" cria `lancamento_caixa` do tipo `entrada` automaticamente
+- Idempotente: verifica `observacoes LIKE '%pedido:ID%'` antes de inserir (evita duplicatas)
 
 #### Dashboard Admin ✅ (dados reais)
-- 5 cards ao vivo: Pedidos, Clientes, Produtos, Receita, **Saldo do Caixa** (novo)
+- 5 cards ao vivo: Pedidos, Clientes, Produtos, Receita, Saldo do Caixa
 - Últimos 5 pedidos, estoque baixo, módulos com status real
-- Módulo Financeiro ativo (era "aguardando Stripe")
 
 #### Minha Conta (/conta) ✅
 - Abas: Dados pessoais (editar), Meus pedidos (histórico), Segurança (alterar senha)
 
 #### Acompanhe seu Pedido (/rastrear-pedido) ✅
 - Progresso visual 5 etapas (pendente → entregue), caso especial "cancelado"
-- Busca pedidos do usuário logado; filtro por número; prompt de login se não autenticado
-- "Central de Atendimento" removido do menu principal
 
 #### US-22 — Fluxo de Caixa Manual ✅
 - Tabela `lancamentos_caixa` + `categorias_caixa` com seed padrão
@@ -162,32 +161,23 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 #### Frete ViaCEP ✅
 - `frete.service.ts`: ViaCEP para validar CEP + exibir cidade/UF, tabela preços por UF
 - Frete grátis se subtotal ≥ R$500
-- TODO marcado para substituir por Melhor Envio/Correios quando tiver credenciais + pesos
 
 #### Conteúdo Dinâmico do Site ✅
 - Bucket `site` + tabelas `hero_slides`, `conteudo_site`, `sobre_galeria`
 - `AdminSitePage`: 5 abas — Carrossel, Sobre Nós, Contatos, Institucional, WhatsApp
-- Carrossel home carrega slides do banco com fallback
 
-#### WhatsApp Bubble + Sidebar Colapsável + UX Catálogo ✅
-- Botão flutuante global com toggle admin; sidebar colapsável com localStorage
-- Catálogo em modo lista, thumbnails clicáveis no detalhe, ScrollToTop global
+#### Responsividade Mobile ✅ (todas as 5 telas admin)
+- Tabela desktop (`hidden md:block`) + Cards mobile (`md:hidden`) em: Pedidos, Estoque, Clientes, Financeiro, Campanhas
 
-#### Seed Wireset ✅ (pronto para aplicar)
-- `supabase/seeds/seed_wireset_produtos.sql` — 63 produtos com `ativo=false`, `preco=0`
+#### Qualidade de Código ✅
+- Tipos Supabase regenerados via CLI (inclui todas as tabelas da Fase 2)
+- Zero erros TypeScript (`pnpm tsc --noEmit` limpo)
+- AbortController 10s em todos os SELECTs admin
 
-### ❌ Pendente
+#### Script de Produção ✅
+- `supabase/scripts/preparar_producao.sql` — limpa dados de teste, mantém tabelas de apoio, reseta estoque
 
-#### Migrations aplicadas ✅
-- `20260507000002` — coluna `destinatarios_manual` + `lista_manual` no segmento ✅
-- `20260507000003` — status check com `arquivada` e `cancelada` ✅
-- `20260507000004` — template de apresentação A2 Brasil Supplies ✅
-
-#### Brevo — entrega incompleta
-- Apenas 1 de 3 e-mails chegou em teste de lista manual
-- Verificar: app.brevo.com → Contacts → Blocklist (outros 2 podem estar suprimidos)
-
-#### Bloqueados por dependência
+### ❌ Bloqueados por dependência externa
 - **US-13** — Checkout Stripe (chaves configuradas, falta implementar Edge Function + webhook)
 - **US-14** — E-mail confirmação de pedido (Brevo OK, falta implementar o fluxo)
 - **US-19** — Alertas estoque mínimo (n8n + WhatsApp)
@@ -195,13 +185,10 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - **Épico 11** — Automações n8n
 
 ### 🚀 Próximas Ações (sem bloqueio externo)
-1. **Supabase SQL Editor** — aplicar migrations `20260507000002`, `000003`, `000004`
-2. **Brevo Blocklist** — verificar app.brevo.com → Contacts → Blocklist para os 2 e-mails que não chegaram
-3. **Deploy produção** — `git pull && pnpm build && pm2 restart a2tech` em `91.99.217.157`
-4. **Aplicar seeds pendentes**: `seed_pedidos_fake.sql`
-5. **Configurar WhatsApp**: `/admin/site` → aba WhatsApp → número real
-6. **Frete real**: quando tiver credenciais Melhor Envio/Correios + pesos dos produtos cadastrados
-7. **US-13 + US-14**: implementar checkout Stripe + e-mail confirmação (chaves já configuradas)
+1. **Deploy produção** — `git push && git pull && pnpm build && pm2 restart a2tech` em `91.99.217.157`
+2. **Brevo Blocklist** — verificar app.brevo.com → Contacts → Blocklist se e-mails de campanha não chegarem
+3. **Configurar WhatsApp** — `/admin/site` → aba WhatsApp → número real
+4. **US-13 + US-14** — Stripe checkout + e-mail confirmação (chaves já configuradas)
 
 ---
 
@@ -276,19 +263,18 @@ Ferramentas para integração com serviços externos. Claude pode usar MCPs para
 
 ## 🎯 Próximas Ações (Ordenadas)
 
-### 1. IMEDIATO — Deploy + seeds pendentes
-- `pnpm build && pm2 restart a2tech` no servidor `54.232.189.113`
-- Aplicar `20260423000005_whatsapp_bubble.sql` no Supabase SQL Editor
-- Aplicar `supabase/seeds/seed_pedidos_fake.sql` (10 pedidos de teste)
-- Aplicar `supabase/seeds/seed_wireset_produtos.sql` (opcional — produtos ocultos)
+### 1. IMEDIATO — Deploy v2.0.0
+- `git push origin main && git push origin v2.0.0`
+- No servidor `91.99.217.157`: `git pull && pnpm build && pm2 restart a2tech`
+- Executar `supabase/scripts/preparar_producao.sql` no Supabase SQL Editor antes do go-live
 
-### 2. Frete real (quando disponível)
-- Substituir `calcularFreteMock()` em `CartPage.tsx` por chamada à API dos Correios ou Melhor Envio
-- Estrutura já pronta para a troca
+### 2. Configuração pós-deploy
+- WhatsApp: `/admin/site` → aba WhatsApp → número real
+- Frete real: substituir tabela ViaCEP por Melhor Envio/Correios quando tiver credenciais + pesos dos produtos
 
 ### 3. Quando tiver as chaves Stripe/Brevo
 - **US-13** [Stripe]: Edge Function + Frontend Checkout + Webhook
-- **US-14** [Brevo]: n8n workflow + template e-mail
+- **US-14** [Brevo]: n8n workflow + template e-mail confirmação
 - **Épico 10 completo** + **Épico 11** (automações n8n)
 
 ---
@@ -336,38 +322,8 @@ Ferramentas para integração com serviços externos. Claude pode usar MCPs para
 
 ---
 
-## 📌 Status da Sessão (2026-04-10)
-
-### ✅ Concluído
-- Lido PRD completo (visão 360°)
-- Explorado código fonte (Cart, Services, DB, Routes)
-- Criado plano detalhado (US-13 + US-14)
-- Documentado uso de MCPs (ferramentas de dev)
-
-### 🎯 Bloqueante Descoberto
-**Fase 1 não está completa!**
-
-Faltam 2 USs críticas:
-- **US-13**: Checkout com Stripe (Edge Functions + Webhook)
-- **US-14**: E-mail de confirmação (n8n + Brevo)
-
-**Decisão**: Implementar US-13 + US-14 ANTES de começar Fase 2
-
-### 📋 Próximos Passos
-1. Obter chaves do Stripe (PUBLISHABLE_KEY + SECRET_KEY)
-2. Obter chave do Brevo (API_KEY)
-3. Ler plano: `C:\Users\rlcun\.claude\plans\cozy-percolating-glacier.md`
-4. Implementar US-13 (Edge Functions) com MCP Stripe
-5. Implementar US-14 (n8n + Brevo) com MCP Brevo
-6. QA completo
-7. Tag v1.0.0
-
-### 💾 Memória Sessão
-Salvo em: `C:\Users\rlcun\.claude\projects\C--Projetos-a2tech\memory\sessao_atual.md`
-→ **Leia isso amanhã para retomar!**
-
 ---
 
-**Última atualização**: 2026-05-07  
-**Versão**: Fase 2 parcial (Épicos 7, 8, 9 concluídos — US-21 enviando, investigar suppression Brevo)  
+**Última atualização**: 2026-05-11  
+**Versão**: v2.0.0 — Fase 2 completa (Épicos 7–9 + Financeiro + Responsividade + Qualidade de Código)  
 **Commit**: ver `git log --oneline -5`

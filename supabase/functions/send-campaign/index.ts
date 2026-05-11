@@ -71,28 +71,21 @@ serve(async (req) => {
     const fromEmail = Deno.env.get('BREVO_FROM_EMAIL') ?? 'a2brasil.ti@gmail.com'
     const fromName  = Deno.env.get('BREVO_FROM_NAME')  ?? 'A2 Brasil Supplies'
 
-    let enviados = 0
-    const erros: string[] = []
-
     console.log(`[send-campaign] Iniciando envio para ${lista.length} destinatário(s). Segmento: ${segmento}`)
 
-    // Envia individualmente para capturar erros por e-mail
-    for (const u of lista) {
+    const sendOne = async (u: Destinatario): Promise<{ ok: true } | { ok: false; msg: string }> => {
       const html = conteudo_html
         .replace(/{{nome}}/g, u.nome)
         .replace(/{{email}}/g, u.email)
 
-      const emailCtrl = new AbortController()
-      const emailTimer = setTimeout(() => emailCtrl.abort(), 15_000)
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 15_000)
 
       try {
         const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
           method: 'POST',
-          signal: emailCtrl.signal,
-          headers: {
-            'api-key': brevoKey,
-            'Content-Type': 'application/json',
-          },
+          signal: ctrl.signal,
+          headers: { 'api-key': brevoKey, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             sender: { name: fromName, email: fromEmail },
             to: [{ email: u.email, name: u.nome }],
@@ -100,24 +93,36 @@ serve(async (req) => {
             htmlContent: html,
           }),
         })
-        clearTimeout(emailTimer)
-
-        const respBody = await resp.text()
-
+        clearTimeout(timer)
+        const body = await resp.text()
         if (resp.ok) {
-          enviados++
           console.log(`[send-campaign] ✓ Enviado: ${u.email}`)
-        } else {
-          const msg = `${u.email} → HTTP ${resp.status}: ${respBody}`
-          erros.push(msg)
-          console.error(`[send-campaign] ✗ Falhou: ${msg}`)
+          return { ok: true }
         }
-      } catch (sendErr) {
-        clearTimeout(emailTimer)
-        const isTimeout = sendErr instanceof Error && sendErr.name === 'AbortError'
-        const msg = `${u.email} → ${isTimeout ? 'Timeout (15s)' : sendErr instanceof Error ? sendErr.message : String(sendErr)}`
-        erros.push(msg)
+        const msg = `${u.email} → HTTP ${resp.status}: ${body}`
         console.error(`[send-campaign] ✗ ${msg}`)
+        return { ok: false, msg }
+      } catch (err) {
+        clearTimeout(timer)
+        const isTimeout = err instanceof Error && err.name === 'AbortError'
+        const msg = `${u.email} → ${isTimeout ? 'Timeout (15s)' : err instanceof Error ? err.message : String(err)}`
+        console.error(`[send-campaign] ✗ ${msg}`)
+        return { ok: false, msg }
+      }
+    }
+
+    const resultados = await Promise.allSettled(lista.map(sendOne))
+
+    let enviados = 0
+    const erros: string[] = []
+    for (const r of resultados) {
+      if (r.status === 'fulfilled' && r.value.ok) {
+        enviados++
+      } else {
+        const msg = r.status === 'rejected'
+          ? String(r.reason)
+          : (r.value as { ok: false; msg: string }).msg
+        erros.push(msg)
       }
     }
 

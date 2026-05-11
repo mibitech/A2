@@ -1,20 +1,20 @@
 -- =====================================================
 -- SCRIPT: Preparar base para produção
 -- Arquivo: supabase/scripts/preparar_producao.sql
--- Executar: Supabase Dashboard → SQL Editor
+-- Executar: Supabase Dashboard → SQL Editor → Run
 --
 -- O QUE ESTE SCRIPT FAZ:
---   ✅ Mantém todos os dados de configuração/apoio
---      (produtos, fornecedores, categorias, templates,
---       conteúdo do site, carrossel, galeria)
---   🗑️  Limpa todos os dados operacionais de teste
---      (pedidos, clientes, movimentações, lançamentos, campanhas)
+--   ✅ Mantém dados de apoio/configuração
+--      (produtos, fornecedores, categorias_caixa,
+--       campanhas_templates, hero_slides, conteudo_site,
+--       sobre_galeria)
+--   🗑️  Limpa dados operacionais de teste
+--      (pedidos, clientes, endereços, movimentações de
+--       estoque, lançamentos do caixa, campanhas enviadas)
 --   👤 Mantém rlcunha@gmail.com como único usuário admin
 --   🔄 Reseta estoque dos produtos para 0
---      (histórico deletado — relançar entradas reais em produção)
 --
--- ⚠️  ATENÇÃO: Esta operação é IRREVERSÍVEL.
---     Faça um backup antes de executar em caso de dúvida.
+-- ⚠️  IRREVERSÍVEL — faça backup antes se necessário.
 -- =====================================================
 
 BEGIN;
@@ -28,61 +28,41 @@ BEGIN
     SELECT 1 FROM auth.users WHERE email = 'rlcunha@gmail.com'
   ) THEN
     RAISE EXCEPTION
-      'Usuário rlcunha@gmail.com não encontrado em auth.users. Abortando.';
+      'Usuário rlcunha@gmail.com não encontrado. Abortando.';
   END IF;
-
-  RAISE NOTICE 'Admin encontrado. Iniciando limpeza...';
+  RAISE NOTICE '✔ Admin encontrado. Iniciando limpeza...';
 END $$;
 
 -- =====================================================
--- PASSO 1: Dados transacionais — itens antes de pedidos
---          (itens_pedido.pedido_id ON DELETE CASCADE,
---           mas deletamos explicitamente para clareza)
+-- PASSO 1: Dados transacionais
+--   itens_pedido antes de pedidos (FK RESTRICT em produtos)
 -- =====================================================
 DELETE FROM public.itens_pedido;
-RAISE NOTICE 'itens_pedido: limpos.';
-
 DELETE FROM public.pedidos;
-RAISE NOTICE 'pedidos: limpos.';
 
 -- =====================================================
 -- PASSO 2: Endereços de clientes
---          (enderecos.usuario_id ON DELETE CASCADE,
---           mas pedidos já foram deletados)
 -- =====================================================
 DELETE FROM public.enderecos;
-RAISE NOTICE 'enderecos: limpos.';
 
 -- =====================================================
--- PASSO 3: Histórico de estoque
---          (movimentacoes_estoque.usuario_id ON DELETE SET NULL
---           — pode ser deletado a qualquer momento)
+-- PASSO 3: Histórico de estoque + reset do saldo
 -- =====================================================
 DELETE FROM public.movimentacoes_estoque;
-RAISE NOTICE 'movimentacoes_estoque: limpas.';
-
--- Resetar estoque dos produtos para zero
--- (o histórico foi apagado — cadastrar movimentações reais ao entrar em produção)
 UPDATE public.produtos SET estoque = 0;
-RAISE NOTICE 'produtos.estoque: resetado para 0.';
 
 -- =====================================================
--- PASSO 4: Fluxo de caixa — lançamentos de teste
---          (lancamentos_caixa.criado_por ON DELETE SET NULL)
+-- PASSO 4: Fluxo de caixa
 -- =====================================================
 DELETE FROM public.lancamentos_caixa;
-RAISE NOTICE 'lancamentos_caixa: limpos.';
 
 -- =====================================================
--- PASSO 5: Campanhas enviadas
---          Mantém: campanhas_templates (dados de apoio)
---          Limpa: campanhas_crm (registros de envio)
+-- PASSO 5: Campanhas enviadas (mantém templates)
 -- =====================================================
 DELETE FROM public.campanhas_crm;
-RAISE NOTICE 'campanhas_crm: limpas. (templates mantidos)';
 
 -- =====================================================
--- PASSO 6: NPS (se a tabela existir)
+-- PASSO 6: NPS — apaga se a tabela existir
 -- =====================================================
 DO $$
 BEGIN
@@ -91,90 +71,74 @@ BEGIN
     WHERE table_schema = 'public' AND table_name = 'nps_respostas'
   ) THEN
     DELETE FROM public.nps_respostas;
-    RAISE NOTICE 'nps_respostas: limpas.';
+    RAISE NOTICE '✔ nps_respostas: limpas.';
   END IF;
 END $$;
 
 -- =====================================================
--- PASSO 7: Garantir que rlcunha@gmail.com é admin
---          (antes de deletar outros usuários)
+-- PASSO 7: Garantir role admin ANTES de deletar outros
 -- =====================================================
 UPDATE public.usuarios
 SET role = 'admin'
-WHERE id = (
-  SELECT id FROM auth.users WHERE email = 'rlcunha@gmail.com'
-);
-RAISE NOTICE 'rlcunha@gmail.com: confirmado como admin.';
+WHERE id = (SELECT id FROM auth.users WHERE email = 'rlcunha@gmail.com');
 
 -- =====================================================
--- PASSO 8: Remover usuários de teste (public.usuarios)
---          pedidos e enderecos já foram deletados,
---          então a FK RESTRICT não bloqueia mais
+-- PASSO 8: Remover usuários de teste
+--   pedidos e endereços já foram deletados,
+--   então a FK RESTRICT não bloqueia
 -- =====================================================
 DELETE FROM public.usuarios
-WHERE id != (
-  SELECT id FROM auth.users WHERE email = 'rlcunha@gmail.com'
-);
-RAISE NOTICE 'usuarios de teste: removidos.';
+WHERE id != (SELECT id FROM auth.users WHERE email = 'rlcunha@gmail.com');
 
 -- =====================================================
 -- PASSO 9: Remover contas de teste do Supabase Auth
---          (auth.usuarios ON DELETE CASCADE → limpa
---           qualquer registro residual em public.usuarios)
+--   ON DELETE CASCADE limpa qualquer resíduo em public.usuarios
 -- =====================================================
 DELETE FROM auth.users
 WHERE email != 'rlcunha@gmail.com';
-RAISE NOTICE 'auth.users de teste: removidos.';
 
--- =====================================================
--- COMMIT
--- =====================================================
 COMMIT;
 
 -- =====================================================
--- VERIFICAÇÃO FINAL — conferir o resultado
+-- VERIFICAÇÃO FINAL
 -- =====================================================
-SELECT
-  tabela,
-  registros,
-  status
+SELECT tabela, registros, esperado
 FROM (
-  SELECT 'usuarios'            AS tabela, COUNT(*)::int AS registros, '✅ manter' AS status FROM public.usuarios
+  SELECT 'usuarios'               AS tabela, COUNT(*)::int AS registros, '1 (admin)'  AS esperado FROM public.usuarios
   UNION ALL
-  SELECT 'pedidos',             COUNT(*)::int, '🗑️  deve ser 0' FROM public.pedidos
+  SELECT 'pedidos',                COUNT(*)::int, '0' FROM public.pedidos
   UNION ALL
-  SELECT 'itens_pedido',        COUNT(*)::int, '🗑️  deve ser 0' FROM public.itens_pedido
+  SELECT 'itens_pedido',           COUNT(*)::int, '0' FROM public.itens_pedido
   UNION ALL
-  SELECT 'enderecos',           COUNT(*)::int, '🗑️  deve ser 0' FROM public.enderecos
+  SELECT 'enderecos',              COUNT(*)::int, '0' FROM public.enderecos
   UNION ALL
-  SELECT 'movimentacoes_estoque', COUNT(*)::int, '🗑️  deve ser 0' FROM public.movimentacoes_estoque
+  SELECT 'movimentacoes_estoque',  COUNT(*)::int, '0' FROM public.movimentacoes_estoque
   UNION ALL
-  SELECT 'lancamentos_caixa',   COUNT(*)::int, '🗑️  deve ser 0' FROM public.lancamentos_caixa
+  SELECT 'lancamentos_caixa',      COUNT(*)::int, '0' FROM public.lancamentos_caixa
   UNION ALL
-  SELECT 'campanhas_crm',       COUNT(*)::int, '🗑️  deve ser 0' FROM public.campanhas_crm
+  SELECT 'campanhas_crm',          COUNT(*)::int, '0' FROM public.campanhas_crm
   UNION ALL
-  SELECT 'produtos',            COUNT(*)::int, '✅ manter' FROM public.produtos
+  SELECT 'produtos',               COUNT(*)::int, 'intacto' FROM public.produtos
   UNION ALL
-  SELECT 'fornecedores',        COUNT(*)::int, '✅ manter' FROM public.fornecedores
+  SELECT 'fornecedores',           COUNT(*)::int, 'intacto' FROM public.fornecedores
   UNION ALL
-  SELECT 'categorias_caixa',    COUNT(*)::int, '✅ manter' FROM public.categorias_caixa
+  SELECT 'categorias_caixa',       COUNT(*)::int, 'intacto' FROM public.categorias_caixa
   UNION ALL
-  SELECT 'campanhas_templates', COUNT(*)::int, '✅ manter' FROM public.campanhas_templates
+  SELECT 'campanhas_templates',    COUNT(*)::int, 'intacto' FROM public.campanhas_templates
   UNION ALL
-  SELECT 'hero_slides',         COUNT(*)::int, '✅ manter' FROM public.hero_slides
+  SELECT 'hero_slides',            COUNT(*)::int, 'intacto' FROM public.hero_slides
   UNION ALL
-  SELECT 'conteudo_site',       COUNT(*)::int, '✅ manter' FROM public.conteudo_site
+  SELECT 'conteudo_site',          COUNT(*)::int, 'intacto' FROM public.conteudo_site
   UNION ALL
-  SELECT 'sobre_galeria',       COUNT(*)::int, '✅ manter' FROM public.sobre_galeria
+  SELECT 'sobre_galeria',          COUNT(*)::int, 'intacto' FROM public.sobre_galeria
 ) t
-ORDER BY status DESC, tabela;
+ORDER BY esperado, tabela;
 
--- Confirmar usuário admin
+-- Confirmar dados do usuário admin
 SELECT
   u.id,
   a.email,
   u.role,
-  u.nome_completo AS nome,
-  a.created_at AS criado_em
+  u.nome_completo AS nome
 FROM public.usuarios u
 JOIN auth.users a ON a.id = u.id;
