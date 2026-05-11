@@ -61,17 +61,23 @@ function mapProduto(row: ProdutoRow): ProdutoAdmin {
 
 // ===== LISTAR TODOS OS PRODUTOS (inclusive inativos) =====
 export async function getAllProdutos(): Promise<{ produtos: ProdutoAdmin[]; error: string | null }> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10_000)
   try {
-    const { data, error } = await Promise.race([
-      supabase.from('produtos').select('*').order('nome', { ascending: true }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 15_000)),
-    ]) as { data: ProdutoRow[] | null; error: { message: string } | null }
+    const { data, error } = await supabase
+      .from('produtos')
+      .select('*')
+      .order('nome', { ascending: true })
+      .abortSignal(controller.signal) as { data: ProdutoRow[] | null; error: { message: string } | null }
+    clearTimeout(timeoutId)
 
     if (error) return { produtos: [], error: error.message }
     return { produtos: (data ?? []).map(mapProduto), error: null }
   } catch (err) {
-    const msg = err instanceof Error && err.message === 'timeout'
-      ? 'Banco de dados demorando a responder. Tente novamente em instantes.'
+    clearTimeout(timeoutId)
+    const isAbort = err instanceof Error && err.name === 'AbortError'
+    const msg = isAbort
+      ? 'Conexão lenta. Recarregue a página.'
       : 'Erro ao buscar produtos'
     return { produtos: [], error: msg }
   }

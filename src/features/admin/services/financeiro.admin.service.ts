@@ -123,10 +123,11 @@ export async function getLancamentos(filtros?: {
     if (filtros?.dataInicio) query = query.gte('data_ref', filtros.dataInicio)
     if (filtros?.dataFim) query = query.lte('data_ref', filtros.dataFim)
 
-    const { data, error } = await Promise.race([
-      query,
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 15_000)),
-    ]) as { data: any[] | null; error: { message: string } | null }
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10_000)
+    const { data, error } = await query
+      .abortSignal(controller.signal)
+      .then(r => { clearTimeout(timeoutId); return r }) as { data: any[] | null; error: { message: string } | null }
 
     if (error) return { lancamentos: [], error: error.message }
 

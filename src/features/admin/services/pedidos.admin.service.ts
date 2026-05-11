@@ -52,17 +52,18 @@ export interface ItemPedidoAdmin {
 // ===== LISTAR TODOS OS PEDIDOS =====
 export async function getAllPedidos(): Promise<{ pedidos: PedidoAdmin[]; error: string | null }> {
   try {
-    const { data, error } = await Promise.race([
-      supabase
-        .from('pedidos')
-        .select(`
-          id, status, subtotal, frete, desconto, total,
-          observacoes, endereco_entrega, created_at, updated_at,
-          usuario:usuarios(id, email, nome_completo, telefone)
-        `)
-        .order('created_at', { ascending: false }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 15_000)),
-    ]) as {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10_000)
+    const { data, error } = await supabase
+      .from('pedidos')
+      .select(`
+        id, status, subtotal, frete, desconto, total,
+        observacoes, endereco_entrega, created_at, updated_at,
+        usuario:usuarios(id, email, nome_completo, telefone)
+      `)
+      .order('created_at', { ascending: false })
+      .abortSignal(controller.signal)
+      .then(r => { clearTimeout(timeoutId); return r }) as {
       data: {
         id: string
         status: StatusPedido

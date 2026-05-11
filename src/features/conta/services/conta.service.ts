@@ -46,14 +46,15 @@ export async function getMeusPedidos(
   userId: string
 ): Promise<{ pedidos: PedidoConta[]; error: string | null }> {
   try {
-    const { data, error } = await Promise.race([
-      supabase
-        .from('pedidos')
-        .select('id, status, subtotal, frete, desconto, total, created_at, itens_pedido(id)')
-        .eq('usuario_id', userId)
-        .order('created_at', { ascending: false }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
-    ]) as {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8_000)
+    const { data, error } = await supabase
+      .from('pedidos')
+      .select('id, status, subtotal, frete, desconto, total, created_at, itens_pedido(id)')
+      .eq('usuario_id', userId)
+      .order('created_at', { ascending: false })
+      .abortSignal(controller.signal)
+      .then(r => { clearTimeout(timeoutId); return r }) as {
       data: {
         id: string
         status: string

@@ -12,6 +12,7 @@ import LoginPage from './features/auth/views/LoginPage'
 import SignupPage from './features/auth/views/SignupPage'
 import ForgotPasswordPage from './features/auth/views/ForgotPasswordPage'
 import ResetPasswordPage from './features/auth/views/ResetPasswordPage'
+import AuthCallbackPage from './features/auth/views/AuthCallbackPage'
 import ProductsPage from './features/products/views/ProductsPage'
 import ProductDetailPage from './features/products/views/ProductDetailPage'
 import CartPage from './features/cart/views/CartPage'
@@ -52,6 +53,7 @@ function App() {
       <Route path="/auth/cadastro" element={<SignupPage />} />
       <Route path="/auth/recuperar-senha" element={<ForgotPasswordPage />} />
       <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
       {/* Products Routes */}
       <Route path="/produtos" element={<ProductsPage />} />

@@ -36,7 +36,7 @@ export async function signUp(data: SignUpInput): Promise<{
           tipo_pessoa: data.tipoPessoa,
           cpf_cnpj: data.cpfCnpj,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${import.meta.env.VITE_APP_URL || window.location.origin}/auth/callback`,
       },
     })
 

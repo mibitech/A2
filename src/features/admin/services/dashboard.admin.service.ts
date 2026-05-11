@@ -75,14 +75,15 @@ export async function getDashboardStats(): Promise<{ stats: DashboardStats; erro
 // ===== ÚLTIMOS 5 PEDIDOS =====
 export async function getPedidosRecentes(): Promise<{ pedidos: PedidoRecente[]; error: string | null }> {
   try {
-    const { data, error } = await Promise.race([
-      supabase
-        .from('pedidos')
-        .select('id, status, total, created_at, usuario:usuarios(nome_completo, email)')
-        .order('created_at', { ascending: false })
-        .limit(5),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
-    ]) as {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 8_000)
+    const { data, error } = await supabase
+      .from('pedidos')
+      .select('id, status, total, created_at, usuario:usuarios(nome_completo, email)')
+      .order('created_at', { ascending: false })
+      .limit(5)
+      .abortSignal(controller.signal)
+      .then(r => { clearTimeout(timeoutId); return r }) as {
       data: {
         id: string
         status: string
