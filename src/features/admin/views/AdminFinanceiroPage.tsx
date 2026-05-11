@@ -247,7 +247,10 @@ function AbaCategorias({ categorias, isLoading, onCriar, onToggle, onExcluir }: 
 
   async function handleCriar(e: React.FormEvent) {
     e.preventDefault()
-    if (!nome.trim()) return
+    if (!nome.trim()) {
+      mostrarFeedback('Informe o nome da categoria', false)
+      return
+    }
     setSalvando(true)
     const result = await onCriar({ nome, tipo })
     setSalvando(false)
@@ -296,7 +299,7 @@ function AbaCategorias({ categorias, isLoading, onCriar, onToggle, onExcluir }: 
           </select>
           <button
             type="submit"
-            disabled={salvando || !nome.trim()}
+            disabled={salvando}
             className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark disabled:opacity-50"
           >
             {salvando ? 'Salvando...' : 'Adicionar'}

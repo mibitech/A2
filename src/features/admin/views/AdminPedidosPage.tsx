@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { usePedidosAdmin } from '../controllers/usePedidosAdmin'
 import type { PedidoAdmin, ItemPedidoAdmin, StatusPedido } from '../controllers/usePedidosAdmin'
 import { reenviarEmailConfirmacao } from '../services/pedidos.admin.service'
+import { useAuthContext } from '@features/auth/contexts/AuthContext'
 import Pagination from '@components/ui/Pagination'
 
 const STATUS_LABEL: Record<StatusPedido, string> = {
@@ -350,6 +351,7 @@ function ThSort({ label, col, current, dir, onSort, align = 'left' }: {
 // PÁGINA PRINCIPAL
 // =====================================================
 export default function AdminPedidosPage() {
+  const { user } = useAuthContext()
   const { pedidos, isLoading, error, reload, getItens, updateStatus, updateObservacoes } = usePedidosAdmin()
 
   const [busca, setBusca] = useState('')
@@ -551,7 +553,7 @@ export default function AdminPedidosPage() {
           onClose={() => setPedidoSelecionado(null)}
           getItens={getItens}
           onUpdateStatus={async (id, status) => {
-            const result = await updateStatus(id, status)
+            const result = await updateStatus(id, status, user?.id)
             if (result.success) {
               setPedidoSelecionado(prev => prev ? { ...prev, status } : null)
             }

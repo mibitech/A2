@@ -157,7 +157,8 @@ export async function getItensPedido(
 // ===== ATUALIZAR STATUS =====
 export async function updateStatusPedido(
   id: string,
-  status: StatusPedido
+  status: StatusPedido,
+  pedidoInfo?: { total: number; clienteNome: string | null; criadoPor?: string }
 ): Promise<{ error: string | null }> {
   try {
     const { error } = await supabase
@@ -166,6 +167,33 @@ export async function updateStatusPedido(
       .eq('id', id)
 
     if (error) return { error: error.message }
+
+    // Ao marcar como pago, registra entrada no fluxo de caixa (idempotente)
+    if (status === 'pago' && pedidoInfo) {
+      const ref = `pedido:${id}`
+      // @ts-ignore
+      const { data: existente } = await supabase
+        .from('lancamentos_caixa')
+        .select('id')
+        .like('observacoes', `%${ref}%`)
+        .limit(1)
+
+      if (!existente || existente.length === 0) {
+        const shortId = id.slice(0, 8).toUpperCase()
+        const cliente = pedidoInfo.clienteNome?.trim() || 'cliente'
+        // @ts-ignore
+        await supabase.from('lancamentos_caixa').insert({
+          tipo: 'entrada',
+          categoria: 'venda',
+          descricao: `Pedido #${shortId} — ${cliente}`,
+          valor: pedidoInfo.total,
+          data_ref: new Date().toISOString().slice(0, 10),
+          observacoes: ref,
+          criado_por: pedidoInfo.criadoPor ?? null,
+        })
+      }
+    }
+
     return { error: null }
   } catch {
     return { error: 'Erro ao atualizar status' }

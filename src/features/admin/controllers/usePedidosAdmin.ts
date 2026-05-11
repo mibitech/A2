@@ -31,12 +31,18 @@ export function usePedidosAdmin() {
     return itens
   }, [])
 
-  const updateStatus = useCallback(async (id: string, status: StatusPedido) => {
-    const { error: err } = await service.updateStatusPedido(id, status)
+  const updateStatus = useCallback(async (id: string, status: StatusPedido, criadoPor?: string) => {
+    const pedido = pedidos.find(p => p.id === id)
+    const pedidoInfo = pedido ? {
+      total: pedido.total,
+      clienteNome: pedido.usuario?.nomeCompleto ?? null,
+      criadoPor,
+    } : undefined
+    const { error: err } = await service.updateStatusPedido(id, status, pedidoInfo)
     if (err) return { success: false, error: err }
     setPedidos(prev => prev.map(p => p.id === id ? { ...p, status } : p))
     return { success: true }
-  }, [])
+  }, [pedidos])
 
   const updateObservacoes = useCallback(async (id: string, observacoes: string) => {
     const { error: err } = await service.updateObservacoes(id, observacoes)
