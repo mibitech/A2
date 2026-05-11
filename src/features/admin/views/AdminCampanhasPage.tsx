@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import Pagination from '@/components/ui/Pagination'
 import { useAuthContext } from '@features/auth/contexts/AuthContext'
 import {
   getCampanhasTemplates, criarTemplate, editarTemplate, excluirTemplate,
@@ -275,14 +276,19 @@ function ModalCampanha({ templates, tags, inicial, templatePre, usuarioId, onClo
     if (!confirm(`Enviar para ${destLabel}? Esta ação não pode ser desfeita.`)) return
     setProcessando(true)
     setErro(null)
-    const result = await onEnviar({
-      titulo, assunto, conteudoHtml, segmento, tagFiltro,
-      destinatariosManual: segmento === 'lista_manual' ? emailsParsed : undefined,
-      templateId: templateId || undefined, criadoPor: usuarioId,
-    })
-    setProcessando(false)
-    if (result.error) setErro(result.error)
-    else onClose()
+    try {
+      const result = await onEnviar({
+        titulo, assunto, conteudoHtml, segmento, tagFiltro,
+        destinatariosManual: segmento === 'lista_manual' ? emailsParsed : undefined,
+        templateId: templateId || undefined, criadoPor: usuarioId,
+      })
+      if (result.error) setErro(result.error)
+      else onClose()
+    } catch {
+      setErro('Erro inesperado ao enviar campanha. Tente novamente.')
+    } finally {
+      setProcessando(false)
+    }
   }
 
   return (
@@ -592,10 +598,22 @@ function AbaCampanhas({ campanhas, loading, onNova, onArquivar, onReenviar, onEx
   onExcluir: (id: string, titulo: string) => void
 }) {
   const [filtroStatus, setFiltroStatus] = useState<StatusCampanha | 'todos'>('todos')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const prevFiltro = useRef(filtroStatus)
+
+  useEffect(() => {
+    if (prevFiltro.current !== filtroStatus) {
+      setPage(1)
+      prevFiltro.current = filtroStatus
+    }
+  }, [filtroStatus])
 
   const filtradas = filtroStatus === 'todos'
     ? campanhas
     : campanhas.filter(c => c.status === filtroStatus)
+
+  const paginadas = filtradas.slice((page - 1) * pageSize, page * pageSize)
 
   const contadores: Record<string, number> = {
     todos: campanhas.length,
@@ -603,6 +621,31 @@ function AbaCampanhas({ campanhas, loading, onNova, onArquivar, onReenviar, onEx
     erro: campanhas.filter(c => c.status === 'erro').length,
     arquivada: campanhas.filter(c => c.status === 'arquivada').length,
     cancelada: campanhas.filter(c => c.status === 'cancelada').length,
+  }
+
+  function AcoesCampanha({ c }: { c: Campanha }) {
+    return (
+      <>
+        {(c.status === 'enviada' || c.status === 'erro') && (
+          <button onClick={() => onArquivar(c.id)}
+            className="rounded-lg border border-neutral-200 px-2.5 py-1 text-xs text-neutral-500 hover:bg-neutral-50 transition-colors">
+            Arquivar
+          </button>
+        )}
+        {c.status === 'arquivada' && (
+          <button onClick={() => onReenviar(c)}
+            className="rounded-lg border border-brand/40 px-2.5 py-1 text-xs text-brand hover:bg-brand/5 transition-colors">
+            Reenviar
+          </button>
+        )}
+        <button onClick={() => onExcluir(c.id, c.titulo)}
+          className="rounded p-1.5 text-neutral-300 hover:text-red-500 transition-colors">
+          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+      </>
+    )
   }
 
   return (
@@ -639,74 +682,106 @@ function AbaCampanhas({ campanhas, loading, onNova, onArquivar, onReenviar, onEx
           <p className="text-sm text-neutral-400">Nenhuma campanha encontrada</p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-neutral-200 bg-neutral-50">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Campanha</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500 hidden sm:table-cell">Destinatários</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-neutral-500">Enviados</th>
-                <th className="px-4 py-3 text-center text-xs font-semibold text-neutral-500">Status</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-neutral-500 hidden md:table-cell">Data</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-100">
-              {filtradas.map(c => (
-                <tr key={c.id} className={`hover:bg-neutral-50 transition-colors ${c.status === 'arquivada' || c.status === 'cancelada' ? 'opacity-60' : ''}`}>
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-neutral-800 truncate max-w-[200px]">{c.titulo}</p>
-                    {c.templateTitulo && (
-                      <p className="text-xs text-neutral-400 truncate">Template: {c.templateTitulo}</p>
-                    )}
-                    {c.erroMsg && (
-                      <p className="text-xs text-red-500 truncate max-w-[200px]" title={c.erroMsg}>{c.erroMsg}</p>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 hidden sm:table-cell">
-                    <span className="text-xs text-neutral-500">
-                      {SEGMENTO_LABEL[c.segmento]}
-                      {c.tagFiltro && <span className="ml-1 rounded bg-neutral-100 px-1.5 py-0.5 font-mono">{c.tagFiltro}</span>}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="font-semibold text-neutral-700">{c.totalEnviados}</span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_COLOR[c.status]}`}>
-                      {STATUS_LABEL[c.status]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right text-xs text-neutral-400 hidden md:table-cell whitespace-nowrap">
-                    {fmtData(c.enviadaAt ?? c.createdAt)}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      {(c.status === 'enviada' || c.status === 'erro') && (
-                        <button onClick={() => onArquivar(c.id)}
-                          className="rounded-lg border border-neutral-200 px-2.5 py-1 text-xs text-neutral-500 hover:bg-neutral-50 transition-colors">
-                          Arquivar
-                        </button>
-                      )}
-                      {c.status === 'arquivada' && (
-                        <button onClick={() => onReenviar(c)}
-                          className="rounded-lg border border-brand/40 px-2.5 py-1 text-xs text-brand hover:bg-brand/5 transition-colors">
-                          Reenviar
-                        </button>
-                      )}
-                      <button onClick={() => onExcluir(c.id, c.titulo)}
-                        className="rounded p-1.5 text-neutral-300 hover:text-red-500 transition-colors">
-                        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  </td>
+        <>
+          {/* Desktop */}
+          <div className="hidden md:block overflow-hidden rounded-xl border border-neutral-200 bg-white">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-neutral-200 bg-neutral-50">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Campanha</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Destinatários</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-neutral-500">Enviados</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-neutral-500">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-neutral-500">Data</th>
+                  <th className="px-4 py-3" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-neutral-100">
+                {paginadas.map(c => (
+                  <tr key={c.id} className={`hover:bg-neutral-50 transition-colors ${c.status === 'arquivada' || c.status === 'cancelada' ? 'opacity-60' : ''}`}>
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-neutral-800 truncate max-w-[200px]" title={c.titulo}>{c.titulo}</p>
+                      {c.templateTitulo && (
+                        <p className="text-xs text-neutral-400 truncate">Template: {c.templateTitulo}</p>
+                      )}
+                      {c.erroMsg && (
+                        <p className="text-xs text-red-500 truncate max-w-[200px]" title={c.erroMsg}>{c.erroMsg}</p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs text-neutral-500">
+                        {SEGMENTO_LABEL[c.segmento]}
+                        {c.tagFiltro && <span className="ml-1 rounded bg-neutral-100 px-1.5 py-0.5 font-mono">{c.tagFiltro}</span>}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center whitespace-nowrap">
+                      <span className="font-semibold text-neutral-700">{c.totalEnviados}</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_COLOR[c.status]}`}>
+                        {STATUS_LABEL[c.status]}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right text-xs text-neutral-400 whitespace-nowrap">
+                      {fmtData(c.enviadaAt ?? c.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <AcoesCampanha c={c} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <Pagination
+              total={filtradas.length}
+              page={page}
+              pageSize={pageSize}
+              onPage={setPage}
+              onPageSize={s => { setPageSize(s); setPage(1) }}
+            />
+          </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3">
+            {paginadas.map(c => (
+              <div key={c.id} className={`rounded-xl border border-neutral-200 bg-white p-4 ${c.status === 'arquivada' || c.status === 'cancelada' ? 'opacity-60' : ''}`}>
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <p className="font-semibold text-neutral-800 text-sm leading-tight min-w-0 truncate" title={c.titulo}>{c.titulo}</p>
+                  <span className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_COLOR[c.status]}`}>
+                    {STATUS_LABEL[c.status]}
+                  </span>
+                </div>
+                {c.templateTitulo && (
+                  <p className="text-xs text-neutral-400 mb-1">Template: {c.templateTitulo}</p>
+                )}
+                {c.erroMsg && (
+                  <p className="text-xs text-red-500 mb-1" title={c.erroMsg}>{c.erroMsg}</p>
+                )}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500 mb-3">
+                  <span>{SEGMENTO_LABEL[c.segmento]}{c.tagFiltro && `: ${c.tagFiltro}`}</span>
+                  <span className="text-neutral-300">·</span>
+                  <span>{c.totalEnviados} enviado(s)</span>
+                  <span className="text-neutral-300">·</span>
+                  <span className="whitespace-nowrap">{fmtData(c.enviadaAt ?? c.createdAt)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <AcoesCampanha c={c} />
+                </div>
+              </div>
+            ))}
+            <div className="rounded-xl border border-neutral-200 bg-white">
+              <Pagination
+                total={filtradas.length}
+                page={page}
+                pageSize={pageSize}
+                onPage={setPage}
+                onPageSize={s => { setPageSize(s); setPage(1) }}
+              />
+            </div>
+          </div>
+        </>
       )}
     </>
   )
