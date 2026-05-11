@@ -46,16 +46,16 @@ function mapProduto(row: ProdutoRow): ProdutoAdmin {
     descricao: row.descricao,
     preco: row.preco,
     precoPromocional: row.preco_promocional,
-    estoque: row.estoque,
+    estoque: row.estoque ?? 0,
     imagens: row.imagens ?? [],
-    categoria: row.categoria,
+    categoria: row.categoria ?? '',
     subcategoria: row.subcategoria,
     sku: row.sku,
     peso: row.peso,
-    ativo: row.ativo,
-    destaque: row.destaque,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    ativo: row.ativo ?? true,
+    destaque: row.destaque ?? false,
+    createdAt: row.created_at ?? '',
+    updatedAt: row.updated_at ?? '',
   }
 }
 
@@ -232,7 +232,7 @@ export async function getMovimentacoes(
       estoqueAnterior: row.estoque_anterior,
       estoquePosterior: row.estoque_posterior,
       motivo: row.motivo,
-      createdAt: row.created_at,
+      createdAt: row.created_at ?? '',
     }))
 
     return { movimentacoes, error: null }

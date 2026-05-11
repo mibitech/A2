@@ -149,7 +149,7 @@ export async function getProdutosEstoqueBaixo(): Promise<{ produtos: ProdutoEsto
 
     if (error) return { produtos: [], error: error.message }
 
-    return { produtos: data ?? [], error: null }
+    return { produtos: (data ?? []).map(p => ({ ...p, estoque: p.estoque ?? 0 })), error: null }
   } catch {
     return { produtos: [], error: 'Erro ao buscar estoque baixo' }
   }

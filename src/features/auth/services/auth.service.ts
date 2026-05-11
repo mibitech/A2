@@ -101,7 +101,7 @@ export async function signUp(data: SignUpInput): Promise<{
             cpfCnpj: userData.cpf_cnpj,
             tipoPessoa: userData.tipo_pessoa as 'fisica' | 'juridica',
             role: userData.role as 'cliente' | 'funcionario' | 'admin',
-            createdAt: userData.created_at,
+            createdAt: userData.created_at ?? '',
           },
           error: null,
         }
@@ -277,7 +277,7 @@ export async function getCurrentUser(): Promise<{
             cpfCnpj: userData.cpf_cnpj,
             tipoPessoa: userData.tipo_pessoa as 'fisica' | 'juridica',
             role: userData.role as 'cliente' | 'funcionario' | 'admin',
-            createdAt: userData.created_at,
+            createdAt: userData.created_at ?? '',
           },
           error: null,
         }

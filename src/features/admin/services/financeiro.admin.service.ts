@@ -46,7 +46,7 @@ export async function getCategorias(): Promise<{ categorias: CategoriaCaixa[]; e
     const categorias: CategoriaCaixa[] = (data ?? []).map(c => ({
       id: c.id,
       nome: c.nome,
-      tipo: c.tipo,
+      tipo: c.tipo as TipoCategoria,
       ativo: c.ativo,
       createdAt: c.created_at,
     }))
@@ -75,7 +75,7 @@ export async function criarCategoria(payload: {
     }
 
     return {
-      categoria: { id: data.id, nome: data.nome, tipo: data.tipo, ativo: data.ativo, createdAt: data.created_at },
+      categoria: { id: data.id, nome: data.nome, tipo: data.tipo as TipoCategoria, ativo: data.ativo, createdAt: data.created_at },
       error: null,
     }
   } catch {
