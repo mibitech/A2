@@ -27,6 +27,17 @@ serve(async (req) => {
 
     const appUrl = Deno.env.get('APP_URL') ?? 'http://localhost:3000'
 
+    // Stripe exige imagens com URL https:// absoluta — filtra qualquer outro valor
+    function stripeImage(url?: string): string[] {
+      if (!url) return []
+      try {
+        const parsed = new URL(url)
+        return parsed.protocol === 'https:' ? [url] : []
+      } catch {
+        return []
+      }
+    }
+
     const lineItems = items.map((item: {
       productName: string
       productPrice: number
@@ -37,8 +48,7 @@ serve(async (req) => {
         currency: 'brl',
         product_data: {
           name: item.productName,
-          // encodeURI garante que acentos e caracteres especiais não quebrem a URL no Stripe
-          ...(item.productImage ? { images: [encodeURI(item.productImage)] } : {}),
+          images: stripeImage(item.productImage),
         },
         unit_amount: Math.round(item.productPrice * 100),
       },
