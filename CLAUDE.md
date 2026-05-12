@@ -190,24 +190,33 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - `useAuth.ts` reescrito: `INITIAL_SESSION` carrega role do banco; refreshes só atualizam tokens
 - Sem travamento após inatividade de aba; sem perda de perfil admin ao retornar
 
+#### Fix Checkout Stripe ✅ (corrigido em 2026-05-12)
+- Edge Function `create-checkout-session` valida URLs de imagem antes de enviar ao Stripe
+- Stripe exige `https://` absoluto — imagens inválidas retornam array vazio sem travar o checkout
+- Edge Function deployada em produção
+
+#### Branches ✅
+- `main` — produção / código estável
+- `dev` — desenvolvimento ativo (criada em 2026-05-12, espelho da main)
+
 ### ❌ Bloqueados por dependência externa
-- **US-13** — Checkout Stripe (chaves configuradas, falta implementar Edge Function + webhook)
+- **US-13** — Checkout Stripe: Edge Function OK, falta testar fluxo completo + configurar `APP_URL` secret no Supabase
 - **US-14** — E-mail confirmação de pedido (Brevo OK, falta implementar o fluxo)
 - **US-19** — Alertas estoque mínimo (n8n + WhatsApp)
 - **Épico 10** — Financeiro Stripe (conciliação automática)
 - **Épico 11** — Automações n8n
 
 ### 🚀 Próximas Ações (em ordem)
-1. **Push + Deploy** — aguardando conclusão da homologação para ir a produção:
+1. **Configurar secret APP_URL** no Supabase Dashboard → Edge Functions → Secrets:
+   `APP_URL=https://www.a2brasilsupplies.com.br`
+2. **Testar checkout** com cartão Stripe de teste `4242 4242 4242 4242`
+3. **Deploy produção** em `91.99.217.157` (branch `main`):
    ```bash
-   git push origin main && git push origin v2.0.0-homologacao
-   # No servidor 91.99.217.157:
    git pull && pnpm install --frozen-lockfile && pnpm build && pm2 restart a2tech
    ```
-2. **Antes do go-live**: executar `supabase/scripts/preparar_producao.sql` no Supabase SQL Editor
-3. **Configurar WhatsApp real**: `/admin/site` → aba WhatsApp → número real
-4. **Brevo Blocklist**: verificar app.brevo.com → Contacts → Blocklist antes de campanhas
-5. **Após homologação aprovada**: implementar US-13 (Stripe) + US-14 (e-mail confirmação)
+4. **Antes do go-live**: executar `supabase/scripts/preparar_producao.sql` no Supabase SQL Editor
+5. **Configurar WhatsApp real**: `/admin/site` → aba WhatsApp → número real
+6. **Desenvolvimento futuro**: sempre em branch `dev` → merge para `main` quando estável
 
 ---
 
@@ -343,6 +352,6 @@ Ferramentas para integração com serviços externos. Claude pode usar MCPs para
 
 ---
 
-**Última atualização**: 2026-05-12  
-**Versão**: v2.0.0-homologacao — Fase 2 completa + fix crítico auth/SDK + páginas institucionais  
-**Commit**: `4a1ae7d` | **Tag**: `v2.0.0-homologacao`
+**Última atualização**: 2026-05-12 (sessão 2)
+**Versão**: v2.0.0-homologacao — Fase 2 + fix auth/SDK + fix Stripe imagem + branch dev
+**Commit**: `7db8832` | **Tag**: `v2.0.0-homologacao` | **Branches**: `main`, `dev`
