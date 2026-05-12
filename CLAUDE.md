@@ -95,7 +95,11 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 
 ---
 
-## 📌 Status do Projeto — v2.0.0 (2026-05-11)
+## 📌 Status do Projeto — v2.0.0-homologacao (2026-05-12)
+
+> ⚠️ **HOMOLOGAÇÃO EM ANDAMENTO** — Tag `v2.0.0-homologacao` marcada em `4a1ae7d`.
+> Não fazer merges diretos nem subir dependências novas até conclusão dos testes do cliente.
+> Para reverter: `git checkout v2.0.0-homologacao`
 
 ### ✅ Concluído (Fase 1 — base)
 - Hero section + proposta de valor
@@ -108,7 +112,7 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - ❌ **Checkout com Stripe (US-13) — pendente** (chaves configuradas, falta Edge Function)
 - ❌ **E-mail de confirmação com Brevo (US-14) — pendente**
 
-### ✅ Concluído (Fase 2 — COMPLETA 🎉) — tag v2.0.0
+### ✅ Concluído (Fase 2 — COMPLETA 🎉) — tags v2.0.0 + v2.0.0-homologacao
 
 #### Épico 7 — Controle de Acesso ✅
 - `is_admin()` e `is_staff()` com SECURITY DEFINER (anti-recursão)
@@ -177,6 +181,15 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 #### Script de Produção ✅
 - `supabase/scripts/preparar_producao.sql` — limpa dados de teste, mantém tabelas de apoio, reseta estoque
 
+#### Páginas Institucionais ✅ (adicionadas em 2026-05-12)
+- 8 páginas em `src/features/institucional/views/`: Certificações, Política de Qualidade, Blog, Trabalhe Conosco, Central de Ajuda, Trocas e Devoluções, Política de Privacidade, Termos de Uso
+- Footer reestruturado: 4 colunas (Institucional, Atendimento, Contato, Redes Sociais)
+
+#### Estabilidade de Auth/SDK ✅ (corrigido em 2026-05-12)
+- `@supabase/supabase-js` pinnado em `2.103.3` (sem `^` — sem drift automático)
+- `useAuth.ts` reescrito: `INITIAL_SESSION` carrega role do banco; refreshes só atualizam tokens
+- Sem travamento após inatividade de aba; sem perda de perfil admin ao retornar
+
 ### ❌ Bloqueados por dependência externa
 - **US-13** — Checkout Stripe (chaves configuradas, falta implementar Edge Function + webhook)
 - **US-14** — E-mail confirmação de pedido (Brevo OK, falta implementar o fluxo)
@@ -184,11 +197,17 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - **Épico 10** — Financeiro Stripe (conciliação automática)
 - **Épico 11** — Automações n8n
 
-### 🚀 Próximas Ações (sem bloqueio externo)
-1. **Deploy produção** — `git push && git pull && pnpm build && pm2 restart a2tech` em `91.99.217.157`
-2. **Brevo Blocklist** — verificar app.brevo.com → Contacts → Blocklist se e-mails de campanha não chegarem
-3. **Configurar WhatsApp** — `/admin/site` → aba WhatsApp → número real
-4. **US-13 + US-14** — Stripe checkout + e-mail confirmação (chaves já configuradas)
+### 🚀 Próximas Ações (em ordem)
+1. **Push + Deploy** — aguardando conclusão da homologação para ir a produção:
+   ```bash
+   git push origin main && git push origin v2.0.0-homologacao
+   # No servidor 91.99.217.157:
+   git pull && pnpm install --frozen-lockfile && pnpm build && pm2 restart a2tech
+   ```
+2. **Antes do go-live**: executar `supabase/scripts/preparar_producao.sql` no Supabase SQL Editor
+3. **Configurar WhatsApp real**: `/admin/site` → aba WhatsApp → número real
+4. **Brevo Blocklist**: verificar app.brevo.com → Contacts → Blocklist antes de campanhas
+5. **Após homologação aprovada**: implementar US-13 (Stripe) + US-14 (e-mail confirmação)
 
 ---
 
@@ -324,6 +343,6 @@ Ferramentas para integração com serviços externos. Claude pode usar MCPs para
 
 ---
 
-**Última atualização**: 2026-05-11  
-**Versão**: v2.0.0 — Fase 2 completa (Épicos 7–9 + Financeiro + Responsividade + Qualidade de Código)  
-**Commit**: ver `git log --oneline -5`
+**Última atualização**: 2026-05-12  
+**Versão**: v2.0.0-homologacao — Fase 2 completa + fix crítico auth/SDK + páginas institucionais  
+**Commit**: `4a1ae7d` | **Tag**: `v2.0.0-homologacao`
