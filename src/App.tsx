@@ -33,6 +33,14 @@ import SobreNosPage from './features/sobre/views/SobreNosPage'
 import ContatosPage from './features/contatos/views/ContatosPage'
 import AcompanhePedidoPage from './features/pedidos/views/AcompanhePedidoPage'
 import WhatsAppBubble from './components/layout/WhatsAppBubble'
+import CertificacoesPage from './features/institucional/views/CertificacoesPage'
+import PoliticaQualidadePage from './features/institucional/views/PoliticaQualidadePage'
+import BlogPage from './features/institucional/views/BlogPage'
+import TrabalheConoscoPage from './features/institucional/views/TrabalheConoscoPage'
+import CentralAjudaPage from './features/institucional/views/CentralAjudaPage'
+import TrocasDevolucoesPage from './features/institucional/views/TrocasDevolucoesPage'
+import PoliticaPrivacidadePage from './features/institucional/views/PoliticaPrivacidadePage'
+import TermosUsoPage from './features/institucional/views/TermosUsoPage'
 
 function App() {
   return (
@@ -47,6 +55,15 @@ function App() {
       <Route path="/contatos" element={<ContatosPage />} />
       <Route path="/contato" element={<Navigate to="/contatos" replace />} />
       <Route path="/rastrear-pedido" element={<AcompanhePedidoPage />} />
+      <Route path="/certificacoes" element={<CertificacoesPage />} />
+      <Route path="/qualidade" element={<PoliticaQualidadePage />} />
+      <Route path="/blog" element={<BlogPage />} />
+      <Route path="/trabalhe-conosco" element={<TrabalheConoscoPage />} />
+      <Route path="/ajuda" element={<CentralAjudaPage />} />
+      <Route path="/meus-pedidos" element={<Navigate to="/conta" replace />} />
+      <Route path="/trocas-devolucoes" element={<TrocasDevolucoesPage />} />
+      <Route path="/privacidade" element={<PoliticaPrivacidadePage />} />
+      <Route path="/termos" element={<TermosUsoPage />} />
 
       {/* Auth Routes */}
       <Route path="/auth/login" element={<LoginPage />} />

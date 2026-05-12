@@ -29,161 +29,116 @@ export function useAuth() {
   const [error, setError] = useState<string | null>(null)
 
   // ===== LOAD USER ON MOUNT =====
+  // Usa onAuthStateChange como única fonte de verdade para evitar race conditions.
+  // Safety timeout de 5s garante que isLoading nunca fique preso.
   useEffect(() => {
     let mounted = true
 
-    async function loadUser() {
-      try {
-        const { session } = await authService.getSession()
+    // Timeout de segurança: se nada resolver em 5s, libera o loading
+    const safetyTimer = setTimeout(() => {
+      if (mounted) {
+        setState(prev => prev.isLoading ? { ...prev, isLoading: false } : prev)
+      }
+    }, 5_000)
 
-        if (session && mounted) {
-          // MODO EMERGÊNCIA: Extrair dados diretamente da sessão para evitar lock conflict
-          if (DISABLE_USUARIOS_TABLE && session.user) {
-            const metadata = session.user.user_metadata || {}
-            const user: AuthUser = {
-              id: session.user.id,
-              email: session.user.email || '',
-              nomeCompleto: metadata.nome_completo || null,
-              telefone: metadata.telefone || null,
-              cpfCnpj: metadata.cpf_cnpj || null,
-              tipoPessoa: (metadata.tipo_pessoa as 'fisica' | 'juridica') || 'fisica',
-              role: 'cliente',
-              createdAt: session.user.created_at,
-            }
+    // Usa session.user diretamente — sem chamar getUser() na rede.
+    // Busca dados extras (role, etc.) na tabela usuarios com timeout de 3s.
+    async function resolveUser(session: { user: { id: string; email?: string; user_metadata?: Record<string, string>; created_at: string }; access_token: string; refresh_token: string }) {
+      const authUser = session.user
+      const metadata = authUser.user_metadata || {}
+      const sessionTokens = { accessToken: session.access_token, refreshToken: session.refresh_token }
 
-            setState({
-              user,
-              session: {
-                accessToken: session.access_token,
-                refreshToken: session.refresh_token,
-              },
-              isLoading: false,
-              isAuthenticated: true,
-            })
-          } else {
-            // MODO NORMAL: Buscar do banco de dados
-            const { user, error } = await authService.getCurrentUser()
+      let role: 'cliente' | 'funcionario' | 'admin' = 'cliente'
+      let nomeCompleto: string | null = metadata.nome_completo || null
+      let telefone: string | null = metadata.telefone || null
+      let cpfCnpj: string | null = metadata.cpf_cnpj || null
+      let tipoPessoa: 'fisica' | 'juridica' = (metadata.tipo_pessoa as 'fisica' | 'juridica') || 'fisica'
 
-            if (user && !error) {
-              setState({
-                user,
-                session: {
-                  accessToken: session.access_token,
-                  refreshToken: session.refresh_token,
-                },
-                isLoading: false,
-                isAuthenticated: true,
-              })
-            } else {
-              setState({
-                ...initialState,
-                isLoading: false,
-              })
-            }
+      if (!DISABLE_USUARIOS_TABLE) {
+        try {
+          const { data } = (await Promise.race([
+            supabase
+              .from('usuarios')
+              .select('role, nome_completo, telefone, cpf_cnpj, tipo_pessoa')
+              .eq('id', authUser.id)
+              .single(),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3_000)),
+          ])) as { data: { role: string; nome_completo: string | null; telefone: string | null; cpf_cnpj: string | null; tipo_pessoa: string | null } | null; error: unknown }
+
+          if (data) {
+            role = (data.role as typeof role) || role
+            nomeCompleto = data.nome_completo || nomeCompleto
+            telefone = data.telefone || telefone
+            cpfCnpj = data.cpf_cnpj || cpfCnpj
+            tipoPessoa = (data.tipo_pessoa as typeof tipoPessoa) || tipoPessoa
           }
-        } else {
-          setState({
-            ...initialState,
-            isLoading: false,
-          })
+        } catch {
+          // timeout ou erro — usa metadata como fallback
         }
-      } catch (err) {
-        console.error('Erro ao carregar usuário:', err)
-        if (mounted) {
-          setState({
-            ...initialState,
-            isLoading: false,
-          })
-        }
+      }
+
+      return {
+        user: {
+          id: authUser.id,
+          email: authUser.email || '',
+          nomeCompleto,
+          telefone,
+          cpfCnpj,
+          tipoPessoa,
+          role,
+          createdAt: authUser.created_at,
+        } as AuthUser,
+        sessionTokens,
       }
     }
 
-    loadUser()
-
-    // Listen to auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-          try {
-            // MODO EMERGÊNCIA: Extrair dados diretamente da sessão para evitar lock conflict
-            if (DISABLE_USUARIOS_TABLE && session.user) {
-              const metadata = session.user.user_metadata || {}
-              const user: AuthUser = {
-                id: session.user.id,
-                email: session.user.email || '',
-                nomeCompleto: metadata.nome_completo || null,
-                telefone: metadata.telefone || null,
-                cpfCnpj: metadata.cpf_cnpj || null,
-                tipoPessoa: (metadata.tipo_pessoa as 'fisica' | 'juridica') || 'fisica',
-                role: 'cliente',
-                createdAt: session.user.created_at,
+        clearTimeout(safetyTimer)
+
+        if (event === 'INITIAL_SESSION') {
+          // Primeira carga da página — resolve usuário completo (com role do banco)
+          if (session) {
+            try {
+              const { user, sessionTokens } = await resolveUser(session)
+              if (user && mounted) {
+                setState({ user, session: sessionTokens, isLoading: false, isAuthenticated: true })
+              } else if (mounted) {
+                setState({ ...initialState, isLoading: false })
               }
-              
-              if (mounted) {
-                setState({
-                  user,
-                  session: {
-                    accessToken: session.access_token,
-                    refreshToken: session.refresh_token,
-                  },
-                  isLoading: false,
-                  isAuthenticated: true,
-                })
-              }
-            } else {
-              // MODO NORMAL: Buscar do banco de dados
-              const { user, error } = await authService.getCurrentUser()
-              if (user && !error && mounted) {
-                setState({
-                  user,
-                  session: {
-                    accessToken: session.access_token,
-                    refreshToken: session.refresh_token,
-                  },
-                  isLoading: false,
-                  isAuthenticated: true,
-                })
-              } else {
-                if (mounted) {
-                  setState({
-                    ...initialState,
-                    isLoading: false,
-                  })
-                }
-              }
+            } catch {
+              if (mounted) setState({ ...initialState, isLoading: false })
             }
-          } catch (err) {
-            console.error('Erro no onAuthStateChange:', err)
-            if (mounted) {
-              setState({
-                ...initialState,
-                isLoading: false,
-              })
-            }
+          } else {
+            if (mounted) setState({ ...initialState, isLoading: false })
           }
-        } else if (event === 'SIGNED_OUT') {
-          if (mounted) {
-            setState({
-              ...initialState,
-              isLoading: false,
-            })
-          }
-        } else if (event === 'TOKEN_REFRESHED' && session) {
+        } else if (event === 'SIGNED_IN' && session) {
+          // Login explícito (signIn()) já atualiza o estado diretamente.
+          // Aqui apenas garantimos que os tokens ficam atualizados sem sobrescrever o role.
           if (mounted) {
             setState(prev => ({
               ...prev,
-              session: {
-                accessToken: session.access_token,
-                refreshToken: session.refresh_token,
-              },
+              session: { accessToken: session.access_token, refreshToken: session.refresh_token },
+              isLoading: false,
             }))
           }
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          // Refresh automático de token — apenas atualiza tokens, preserva role
+          if (mounted) {
+            setState(prev => ({
+              ...prev,
+              session: { accessToken: session.access_token, refreshToken: session.refresh_token },
+            }))
+          }
+        } else if (event === 'SIGNED_OUT') {
+          if (mounted) setState({ ...initialState, isLoading: false })
         }
       }
     )
 
     return () => {
       mounted = false
+      clearTimeout(safetyTimer)
       authListener.subscription.unsubscribe()
     }
   }, [])

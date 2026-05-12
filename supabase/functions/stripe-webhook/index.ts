@@ -135,6 +135,51 @@ serve(async (req) => {
     }
   }
 
+  // Registrar entrada no fluxo de caixa (idempotente)
+  const ref = `pedido:${pedido.id}`
+  const { data: lancExistente } = await supabase
+    .from('lancamentos_caixa')
+    .select('id')
+    .like('observacoes', `%${ref}%`)
+    .limit(1)
+
+  if (!lancExistente || lancExistente.length === 0) {
+    const shortId = pedido.id.slice(0, 8).toUpperCase()
+
+    // Buscar nome do cliente (best-effort)
+    let clienteNome = 'cliente'
+    const { data: usuario } = await supabase
+      .from('usuarios')
+      .select('nome_completo')
+      .eq('id', meta.user_id)
+      .maybeSingle()
+    if (usuario?.nome_completo) clienteNome = usuario.nome_completo.trim().split(' ')[0]
+
+    const hoje = new Date().toISOString().slice(0, 10)
+
+    await supabase.from('lancamentos_caixa').insert({
+      tipo: 'entrada',
+      categoria: 'venda',
+      descricao: `Pedido #${shortId} — ${clienteNome}`,
+      valor: total,
+      data_ref: hoje,
+      observacoes: ref,
+      criado_por: meta.user_id,
+    })
+
+    if (freteValor > 0) {
+      await supabase.from('lancamentos_caixa').insert({
+        tipo: 'saida',
+        categoria: 'frete',
+        descricao: `Frete Pedido #${shortId} — ${meta.frete_nome || 'Transportadora'}`,
+        valor: freteValor,
+        data_ref: hoje,
+        observacoes: ref,
+        criado_por: meta.user_id,
+      })
+    }
+  }
+
   // Disparar e-mail de confirmação (best-effort)
   try {
     await supabase.functions.invoke('send-order-confirmation', {

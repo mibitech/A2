@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useProducts } from '../controllers/useProducts'
 import { useCart } from '@/features/cart/contexts/CartContext'
 import ProductCard from './ProductCard'
@@ -20,6 +20,9 @@ function ChevronIcon({ open }: { open: boolean }) {
 }
 
 function ProductsPage() {
+  const [searchParams] = useSearchParams()
+  const categoriaUrl = searchParams.get('categoria') ?? undefined
+
   const {
     products,
     total,
@@ -34,7 +37,7 @@ function ProductsPage() {
     clearFilters,
     goToPage,
     refresh,
-  } = useProducts()
+  } = useProducts(categoriaUrl ? { categoria: categoriaUrl } : {})
 
   const { itemsCount } = useCart()
   const [openSections, setOpenSections] = useState({ categoria: true, preco: true })

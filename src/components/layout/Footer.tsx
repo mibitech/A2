@@ -1,14 +1,5 @@
 import { Link } from 'react-router-dom'
 
-const productLinks = [
-  { to: '/produtos/cabos-de-aco', label: 'Cabos de Aço' },
-  { to: '/produtos/cintas-de-elevacao', label: 'Cintas de Elevação' },
-  { to: '/produtos/correntes', label: 'Correntes' },
-  { to: '/produtos/lingas', label: 'Lingas' },
-  { to: '/produtos/manilhas', label: 'Manilhas' },
-  { to: '/produtos/acessorios', label: 'Acessórios' },
-]
-
 const institutionalLinks = [
   { to: '/sobre', label: 'Sobre a A2 Brasil Supplies' },
   { to: '/certificacoes', label: 'Certificações' },
@@ -19,7 +10,7 @@ const institutionalLinks = [
 
 const supportLinks = [
   { to: '/ajuda', label: 'Central de Ajuda' },
-  { to: '/meus-pedidos', label: 'Meus Pedidos' },
+  { to: '/conta', label: 'Meus Pedidos' },
   { to: '/trocas-devolucoes', label: 'Trocas e Devoluções' },
   { to: '/privacidade', label: 'Política de Privacidade' },
   { to: '/termos', label: 'Termos de Uso' },
@@ -51,9 +42,8 @@ function Footer() {
       {/* Main content */}
       <div className="border-b border-neutral-800 py-14">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4">
 
-            <FooterLinkList title="Produtos" links={productLinks} />
             <FooterLinkList title="Institucional" links={institutionalLinks} />
             <FooterLinkList title="Atendimento" links={supportLinks} />
 
