@@ -281,7 +281,8 @@ function FormModal({ produto, fornecedores, onClose, onCreate, onUpdate, uploadI
       descricao: form.descricao.trim() || null,
       preco: parseFloat(form.preco),
       preco_promocional: form.precoPromocional ? parseFloat(form.precoPromocional) : null,
-      estoque: parseInt(form.estoque) || 0,
+      // estoque só é enviado na criação; edição usa lotes/ajuste manual
+      ...(!isEdit ? { estoque: 0 } : {}),
       imagens: imagensTemp,
       categoria: form.categoria.trim(),
       subcategoria: form.subcategoria.trim() || null,
@@ -356,8 +357,15 @@ function FormModal({ produto, fornecedores, onClose, onCreate, onUpdate, uploadI
 
             <div>
               <label className="mb-1 block text-sm font-medium text-neutral-700">Estoque</label>
-              <input name="estoque" type="number" min="0" value={form.estoque} onChange={handleChange}
-                className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand" />
+              {isEdit ? (
+                <div className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+                  <span className="text-sm font-semibold text-neutral-800">{form.estoque} un.</span>
+                  <span className="text-xs text-neutral-400">— gerenciado por lotes e ajuste manual</span>
+                </div>
+              ) : (
+                <input name="estoque" type="number" min="0" value={form.estoque} onChange={handleChange}
+                  className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand" />
+              )}
             </div>
 
             <div>
