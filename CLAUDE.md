@@ -170,8 +170,9 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - Bucket `site` + tabelas `hero_slides`, `conteudo_site`, `sobre_galeria`
 - `AdminSitePage`: 5 abas — Carrossel, Sobre Nós, Contatos, Institucional, WhatsApp
 
-#### Responsividade Mobile ✅ (todas as 5 telas admin)
+#### Responsividade Mobile ✅ (todas as 5 telas admin + sidebar)
 - Tabela desktop (`hidden md:block`) + Cards mobile (`md:hidden`) em: Pedidos, Estoque, Clientes, Financeiro, Campanhas
+- Sidebar: overlay fixo com backdrop no mobile (`< lg`), flex estático no desktop (`>= lg`)
 
 #### Qualidade de Código ✅
 - Tipos Supabase regenerados via CLI (inclui todas as tabelas da Fase 2)
@@ -180,6 +181,17 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 
 #### Script de Produção ✅
 - `supabase/scripts/preparar_producao.sql` — limpa dados de teste, mantém tabelas de apoio, reseta estoque
+- `supabase/scripts/limpar_dados_teste.sql` — limpeza seletiva em ordem FK correta
+
+#### Gestão de Estoque — correções (2026-05-13) ✅
+- Lista de produtos atualiza automaticamente após operações em lotes (`onEstoqueChanged` callback)
+- Ajuste manual de estoque roteia pelo lote ativo (`atualizarEstoqueLote`) — trigger mantém `produtos.estoque` em sync
+- Stripe webhook: lê `produtos.estoque` antes de alterar lote (estoque_anterior correto)
+- Campo estoque no formulário Editar Produto: somente leitura
+- `fornecedor_id` em produtos: tornado opcional (migration `20260513000003`, `DROP NOT NULL`)
+
+#### Botão "Comprar Agora" ✅ (corrigido em 2026-05-13)
+- Não duplica mais item no carrinho se produto já estiver presente
 
 #### Páginas Institucionais ✅ (adicionadas em 2026-05-12)
 - 8 páginas em `src/features/institucional/views/`: Certificações, Política de Qualidade, Blog, Trabalhe Conosco, Central de Ajuda, Trocas e Devoluções, Política de Privacidade, Termos de Uso
@@ -199,30 +211,27 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - `main` — produção / código estável
 - `dev` — desenvolvimento ativo (criada em 2026-05-12, espelho da main)
 
-### ❌ Bloqueados por dependência externa
-- **US-13** — Checkout Stripe: Edge Function OK, falta testar fluxo completo + configurar `APP_URL` secret no Supabase
-- **US-14** — E-mail confirmação de pedido (Brevo OK, falta implementar o fluxo)
+### ❌ Pendentes por dependência externa
 - **US-19** — Alertas estoque mínimo (n8n + WhatsApp)
 - **Épico 10** — Financeiro Stripe (conciliação automática)
-- **Épico 11** — Automações n8n
+- **Épico 11** — Automações n8n (abandono de carrinho, NPS)
 
-### ✅ Homologação Concluída — 2026-05-13
+### ✅ Homologação + Produção Concluídas — 2026-05-13
 - `APP_URL` configurado no Supabase (Edge Functions Secrets)
-- Checkout Stripe testado e aprovado
+- Checkout Stripe + e-mail confirmação: Edge Functions deployadas (`stripe-webhook`, `send-order-confirmation`)
 - Deploy realizado em produção (`91.99.217.157`)
 - **Sistema em produção** — https://www.a2brasilsupplies.com.br
 
 ### 🚀 Próximas Ações — Fase 2 (itens pendentes)
-1. **US-13 webhook** — Validar criação automática de pedido após pagamento Stripe confirmado (testar com `4242 4242 4242 4242`)
-2. **US-14** — Testar e-mail de confirmação chegando após pedido pago
-3. **SMTP do cliente (Locaweb)** — Migrar remetente de e-mail do Brevo SMTP para conta Locaweb do cliente. Atualizar 4 secrets no Supabase: `BREVO_SMTP_HOST` → `email-ssl.com.br`, `BREVO_SMTP_PORT` → `587`, `BREVO_SMTP_USER` → e-mail Locaweb, `BREVO_SMTP_PASS` → senha da conta Locaweb. Nenhum código muda, só os secrets.
-4. **US-19** — Alertas estoque mínimo via n8n + WhatsApp (quando número configurado)
-5. **Épico 10** — Conciliação financeira automática via webhook Stripe
-6. **Épico 11** — Automações n8n (abandono de carrinho, NPS)
-7. **Configurar WhatsApp real**: `/admin/site` → aba WhatsApp → número real
-8. **Stripe produção** — Trocar chaves de teste pelas reais quando conta Stripe for ativada
-9. **Frete real** — Melhor Envio/Correios quando tiver credenciais + pesos dos produtos
-10. **Desenvolvimento**: sempre em branch `dev` → merge para `main` → produção
+1. **Testar US-13+14** — compra completa com `4242 4242 4242 4242`; verificar pedido no admin + e-mail chegando
+2. **SMTP Locaweb** — Migrar remetente de Brevo SMTP para conta Locaweb do cliente. Atualizar 4 secrets no Supabase: `BREVO_SMTP_HOST=email-ssl.com.br`, `BREVO_SMTP_PORT=587`, `BREVO_SMTP_USER=<email Locaweb>`, `BREVO_SMTP_PASS=<senha Locaweb>`. Nenhum código muda.
+3. **US-19** — Alertas estoque mínimo via n8n + WhatsApp (quando número configurado)
+4. **Épico 10** — Conciliação financeira automática via webhook Stripe
+5. **Épico 11** — Automações n8n (abandono de carrinho, NPS)
+6. **WhatsApp real** — `/admin/site` → aba WhatsApp → número real
+7. **Stripe produção** — Trocar chaves de teste pelas reais quando conta Stripe ativada
+8. **Frete real** — Melhor Envio/Correios quando tiver credenciais + pesos dos produtos
+9. **Desenvolvimento**: sempre em branch `dev` → merge para `main` → produção
 
 ---
 
@@ -357,6 +366,6 @@ Ferramentas para integração com serviços externos. Claude pode usar MCPs para
 
 ---
 
-**Última atualização**: 2026-05-13
+**Última atualização**: 2026-05-13 (sessão 4)
 **Versão**: v2.0.0 — **EM PRODUÇÃO** ✅ (homologação aprovada em 2026-05-13)
-**Commit**: `9a1e354` | **Tag**: `v2.0.0-homologacao` | **Branches**: `main`, `dev`
+**Commit**: `8c5ff71` | **Tag**: `v2.0.0-homologacao` | **Branches**: `main`, `dev`
