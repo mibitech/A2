@@ -7,9 +7,9 @@
 ## 1. Visão Geral do Produto
 
 ### 1.1 Problema de Negócio
-O cliente é dono da **Wireset** (www.wireset.com.br), empresa do segmento de equipamentos de elevação e amarração de cargas. Impedimentos societários impedem alterações imediatas na estrutura da Wireset. Para contornar esse bloqueio e iniciar operações de e-commerce sem atrasos, a solução é criar uma **nova empresa independente: A2Tech**.
+O cliente opera no segmento de equipamentos de elevação e amarração de cargas e criou a **A2Tech** como empresa independente de e-commerce.
 
-A A2Tech atuará inicialmente como **revendedora de um subconjunto selecionado de produtos da FitaCabo** (www.fitacabo.com.br), enquanto a arquitetura já é desenhada para absorver **todo o catálogo da Wireset** sem refatoração futura.
+A A2Tech atua como **revendedora de produtos do segmento**, iniciando com um subconjunto selecionado de produtos da **FitaCabo** (www.fitacabo.com.br). O catálogo cresce de forma orgânica, sem vínculo societário ou integração técnica com outras empresas do setor.
 
 ### 1.2 Solução Proposta
 Desenvolver um **site institucional + e-commerce completo** com CRM/ERP simplificado integrado, preparado para operação multi-fornecedor, com automações via n8n e assistente de IA no painel administrativo.
@@ -22,7 +22,6 @@ Desenvolver um **site institucional + e-commerce completo** com CRM/ERP simplifi
 | Funcionário | Operador com acesso limitado ao painel |
 | Cliente Final | Comprador do e-commerce |
 | Fornecedor FitaCabo | Fornecedor inicial — 4 produtos selecionados |
-| Fornecedor Wireset | Fornecedor futuro — catálogo completo em migração planejada |
 
 ---
 
@@ -33,7 +32,7 @@ Desenvolver um **site institucional + e-commerce completo** com CRM/ERP simplifi
 | Lançar e-commerce funcional | Fase 1 concluída e em produção | 3 meses |
 | Atingir primeiras vendas | 10 pedidos/mês | Mês 2 |
 | Automatizar operações | 80% dos alertas via n8n | Fase 2 (6 meses) |
-| Preparar integração Wireset | Migração zero-downtime executada | Fase 3 (18 meses) |
+| Expandir catálogo | Novos fornecedores e produtos incorporados organicamente | Fase 3 (18 meses) |
 
 ---
 
@@ -171,11 +170,11 @@ O Conjunto de Amarração Cesa é projetado para garantir a segurança durante o
 
 ---
 
-### 3.2 Estratégia de Catálogo — Produto com feature_flag
+### 3.2 Estratégia de Catálogo
 
 Todos os produtos são armazenados na tabela `produtos` com campo `fornecedor_id` e `ativo`.
 Os 4 produtos acima têm `ativo = true` no seed inicial.
-Produtos Wireset terão `ativo = false` até habilitação via feature flag `WIRESET_ENABLED=true`.
+Novos fornecedores e produtos são incorporados manualmente pelo admin — sem feature flags automáticas.
 
 ```sql
 -- Estrutura da tabela produtos (campos relevantes ao catálogo)
@@ -205,59 +204,13 @@ CREATE TABLE produtos (
 
 ---
 
-## 4. Catálogo Futuro — Wireset (Fase 3)
+## 4. Expansão de Catálogo (Fase 3+)
 
-> **Estratégia**: raspar e catalogar AGORA no banco com `ativo = false`.
-> Ativar via `WIRESET_ENABLED=true` somente na Fase 3.
-> Zero impacto nos produtos FitaCabo ativos.
+> **Estratégia**: novos fornecedores e produtos são incorporados manualmente pelo admin.
+> Cada fornecedor novo é cadastrado na tela de Fornecedores e seus produtos criados individualmente.
+> Não há integração automática ou raspagem de sites externos.
 
-### 4.1 Catálogo Wireset — Mapeado por Raspagem
-
-**Fonte**: www.wireset.com.br/catalogo
-
-| Categoria Wireset | Subcategorias Identificadas | URL de Raspagem |
-|-------------------|---------------------------|-----------------|
-| **Acessórios** | Acessórios industriais para elevação | https://www.wireset.com.br/catalogo/acessorios |
-| **Cabos de Aço** | Lingas de cabo, cabos simples, cabo aço linga | https://www.wireset.com.br/catalogo/cabos-de-aco |
-| **Laços** | Laços de aço para elevação | https://www.wireset.com.br/catalogo/lacos |
-| **Cintas de Elevação** | Cintas sling, elevação, amarração | https://www.wireset.com.br/catalogo/cintas-de-elevacao |
-
-**Serviços Wireset (sem estoque — sob consulta):**
-- Serviços técnicos especializados em elevação e transporte de cargas
-- Fonte: https://www.wireset.com.br/servicos
-
-**Contato Wireset (para referência no script de raspagem):**
-- Endereço: R. Dias da Silva, 440 — Vila Maria/SP — CEP: 02114-001
-- Tel: (11) 2795-3771
-- WhatsApp: (11) 94805-1864
-- E-mail: wireset@wireset.com.br
-
-### 4.2 Script de Raspagem — Wireset
-
-```typescript
-// scripts/scrape-wireset.ts
-// Raspa as 4 categorias do catálogo Wireset e insere no Supabase com ativo=false
-
-const WIRESET_CATEGORIES = [
-  { nome: 'Acessórios',        url: 'https://www.wireset.com.br/catalogo/acessorios' },
-  { nome: 'Cabos de Aço',      url: 'https://www.wireset.com.br/catalogo/cabos-de-aco' },
-  { nome: 'Laços',             url: 'https://www.wireset.com.br/catalogo/lacos' },
-  { nome: 'Cintas de Elevação',url: 'https://www.wireset.com.br/catalogo/cintas-de-elevacao' },
-];
-
-const FORNECEDOR_ID = 'wireset';
-
-// Para cada categoria:
-// 1. Fazer GET na URL
-// 2. Extrair lista de produtos (nome, descrição, imagens, URL do produto)
-// 3. Para cada produto, acessar URL individual e extrair especificações técnicas
-// 4. Inserir no Supabase com:
-//    - fornecedor_id: 'wireset'
-//    - ativo: false         ← NUNCA exibir no e-commerce até WIRESET_ENABLED=true
-//    - categoria + subcategoria mapeadas
-```
-
-### 4.3 Script de Raspagem — FitaCabo (Produtos Ativos)
+### 4.1 Script de Raspagem — FitaCabo (Produtos Ativos)
 
 ```typescript
 // scripts/scrape-fitacabo.ts
@@ -327,9 +280,8 @@ const FORNECEDOR_ID = 'fitacabo';
 ```sql
 -- supabase/migrations/20260407_seed_fornecedores.sql
 INSERT INTO fornecedores (id, nome, slug, url, ativo) VALUES
-  ('fitacabo', 'FitaCabo', 'fitacabo', 'https://www.fitacabo.com.br', true),
-  ('wireset',  'Wireset',  'wireset',  'https://www.wireset.com.br',  false);
--- Wireset ativo=false até migração na Fase 3
+  ('fitacabo', 'FitaCabo', 'fitacabo', 'https://www.fitacabo.com.br', true);
+-- Novos fornecedores são cadastrados manualmente pelo admin
 ```
 
 ---
@@ -365,7 +317,6 @@ INSERT INTO fornecedores (id, nome, slug, url, ativo) VALUES
 - **Migrations versionadas**: `supabase/migrations/` com timestamps ISO
 - **Commits atômicos**: Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`)
 - **Rollback por tag Git**: tags `v1.0.0`, `v2.0.0`, `v3.0.0`
-- **Feature flags**: `WIRESET_ENABLED` controla exibição dos produtos Wireset
 
 ---
 
@@ -375,7 +326,7 @@ INSERT INTO fornecedores (id, nome, slug, url, ativo) VALUES
 |------|---------|------|
 | **Fase 1** | 0–3 meses | Landing Page + E-commerce com os 4 produtos FitaCabo |
 | **Fase 2** | 3–6 meses | Painel Admin + Estoque + CRM + Financeiro + Automações n8n |
-| **Fase 3** | 6–18 meses | IA generativa + Integração Wireset (catálogo completo) + Marketplaces + App Mobile |
+| **Fase 3** | 6–18 meses | IA generativa + Expansão de catálogo + Marketplaces + App Mobile |
 
 ---
 
@@ -389,13 +340,12 @@ INSERT INTO fornecedores (id, nome, slug, url, ativo) VALUES
 | US-01 | Architect | Inicializar repositório com pnpm, Vite+React+TS, Tailwind, ESLint, Prettier | `pnpm create vite` configurado; scripts dev/build/start/lint funcionando |
 | US-02 | Architect | Configurar Supabase (projeto, tabelas, RLS) | Tabelas criadas com `fornecedor_id`; RLS ativo em todas as tabelas |
 | US-03 | Code | Configurar variáveis de ambiente | `.env.example` documentado; nenhum secret hardcoded |
-| US-04 | Architect | Seed inicial de fornecedores e produtos | FitaCabo ativo, Wireset inativo; 4 produtos FitaCabo com `ativo=true` |
+| US-04 | Architect | Seed inicial de fornecedores e produtos | FitaCabo cadastrado; 4 produtos FitaCabo com `ativo=true` |
 
 #### ÉPICO 2 — Raspagem e Seed de Produtos
 | US | Responsável | Descrição | Critérios de Aceite |
 |----|-------------|-----------|---------------------|
 | US-05 | Architect | Script `scrape-fitacabo.ts` — raspa os 4 produtos ativos | Dados persistidos no Supabase: nome, descrição, imagens, norma, capacidade, `ativo=true` |
-| US-06 | Architect | Script `scrape-wireset.ts` — raspa catálogo completo Wireset | Todos os produtos nas 4 categorias no Supabase com `ativo=false`; não exibidos no e-commerce |
 
 #### ÉPICO 3 — Landing Page
 | US | Responsável | Descrição | Critérios de Aceite |
@@ -413,7 +363,7 @@ INSERT INTO fornecedores (id, nome, slug, url, ativo) VALUES
 #### ÉPICO 5 — Catálogo de Produtos
 | US | Responsável | Descrição | Critérios de Aceite |
 |----|-------------|-----------|---------------------|
-| US-12 | Code | Listagem de produtos — exibe apenas `ativo=true` e `fornecedor_id=fitacabo` | Query filtra `ativo=true`; Wireset nunca exibido no Fase 1; paginação 20 itens/página |
+| US-12 | Code | Listagem de produtos — exibe apenas `ativo=true` | Query filtra `ativo=true`; paginação 20 itens/página |
 | US-13 | Code | Filtros por categoria e subcategoria | Filtros dinâmicos via MCP Supabase |
 | US-14 | Code | Página de detalhe do produto | Imagem, descrição, norma, fator segurança, capacidade, preço, estoque, botão "Adicionar ao carrinho" |
 
@@ -464,11 +414,11 @@ INSERT INTO fornecedores (id, nome, slug, url, ativo) VALUES
 |----|-------------|-----------|---------------------|
 | US-27 | Architect + MCP n8n | Workflow abandono de carrinho | Trigger: 2h sem checkout → e-mail Brevo com cupom 5% |
 | US-28 | Code + MCP n8n | NPS automático pós-compra | 7 dias após entrega → e-mail com formulário NPS |
-| US-29 | Architect + MCP n8n | Raspagem periódica do catálogo | Cron semanal re-executa `scrape-fitacabo.ts` e `scrape-wireset.ts` para manter dados atualizados |
+| US-29 | Architect + MCP n8n | Raspagem periódica do catálogo FitaCabo | Cron semanal re-executa `scrape-fitacabo.ts` para manter dados atualizados |
 
 ---
 
-### FASE 3 — IA + Wireset + Marketplaces (6–18 meses) → Tag v3.0.0
+### FASE 3 — IA + Expansão + Marketplaces (6–18 meses) → Tag v3.0.0
 
 **Pré-requisito**: Tag v2.0.0 em produção e aprovada.
 
@@ -477,12 +427,11 @@ INSERT INTO fornecedores (id, nome, slug, url, ativo) VALUES
 |----|-------------|-----------|---------------------|
 | US-30 | Architect | Integrar LLM com MCP Supabase + MCP Brevo | Chat no painel com queries em linguagem natural; ações automatizadas |
 
-#### ÉPICO 14 — Integração Wireset
+#### ÉPICO 14 — Expansão de Catálogo
 | US | Responsável | Descrição | Critérios de Aceite |
 |----|-------------|-----------|---------------------|
-| US-31 | Architect | Ativar feature flag `WIRESET_ENABLED=true` | Produtos Wireset (já no banco desde Fase 1 com `ativo=false`) passam para `ativo=true` |
-| US-32 | Code | Exibição dos produtos Wireset no e-commerce | Zero impacto nos produtos FitaCabo; filtro por fornecedor no catálogo |
-| US-33 | Code | Página "Sobre a Wireset" e integração de marca | Contexto histórico da Wireset disponível no site |
+| US-31 | Code | Novos fornecedores e produtos via painel admin | Cadastro manual pelo admin; nenhuma integração automática externa |
+| US-32 | Code | Filtro por fornecedor no catálogo público | Cliente pode filtrar produtos por marca/fornecedor |
 
 #### ÉPICO 15 — Marketplaces
 | US | Responsável | Descrição | Critérios de Aceite |
@@ -512,7 +461,7 @@ INSERT INTO fornecedores (id, nome, slug, url, ativo) VALUES
 | Alerta estoque mínimo | 2 | Trigger Supabase (estoque < mínimo) | WhatsApp para admin | Twilio/Evolution API |
 | NPS pós-compra | 2 | 7 dias após status "entregue" | E-mail formulário NPS | Brevo |
 | Relatório semanal | 2 | Cron toda segunda-feira às 8h | E-mail PDF de vendas | Brevo + Supabase |
-| Raspagem periódica | 2 | Cron semanal | Atualiza catálogo FitaCabo e Wireset | Scripts Node.js |
+| Raspagem periódica | 2 | Cron semanal | Atualiza catálogo FitaCabo | Scripts Node.js |
 
 ---
 
@@ -521,8 +470,8 @@ INSERT INTO fornecedores (id, nome, slug, url, ativo) VALUES
 ### Tabelas Principais
 | Tabela | Campos-chave | Notas |
 |--------|-------------|-------|
-| `fornecedores` | id, nome, slug, url, ativo | `fitacabo` ativo, `wireset` inativo até Fase 3 |
-| `produtos` | id, fornecedor_id, nome, slug, descricao, descricao_tecnica, norma, fator_seguranca, capacidade_min, capacidade_max, material, aplicacoes, categoria, subcategoria, imagens, preco, estoque, ativo | ativo=false para Wireset |
+| `fornecedores` | id, nome, slug, url, ativo | Cadastro manual pelo admin |
+| `produtos` | id, fornecedor_id, nome, slug, descricao, descricao_tecnica, norma, fator_seguranca, capacidade_min, capacidade_max, material, aplicacoes, categoria, subcategoria, imagens, preco, estoque, ativo | ativo controla exibição no e-commerce |
 | `usuarios` | id, email, role, criado_em | Supabase Auth + metadados |
 | `pedidos` | id, usuario_id, status, total, stripe_session_id, criado_em | Status: pendente/pago/cancelado/entregue |
 | `itens_pedido` | id, pedido_id, produto_id, quantidade, preco_unitario | Snapshot do preço |
@@ -537,8 +486,7 @@ INSERT INTO fornecedores (id, nome, slug, url, ativo) VALUES
 | Risco | Probabilidade | Impacto | Mitigação |
 |-------|--------------|---------|-----------|
 | Mudança de nome da empresa | Alta | Médio | `COMPANY_NAME` em `.env` e i18n |
-| Migração Wireset com ruptura | Média | Alto | `fornecedor_id` + feature flag `WIRESET_ENABLED` |
-| Site FitaCabo/Wireset altera estrutura HTML | Média | Médio | Scripts de raspagem com seletores CSS resilientes + alertas de falha via n8n |
+| Site FitaCabo altera estrutura HTML | Média | Médio | Scripts de raspagem com seletores CSS resilientes + alertas de falha via n8n |
 | Indisponibilidade de MCP externo | Baixa | Médio | Fallback via REST direto no Supabase/APIs |
 | Secrets expostos acidentalmente | Baixa | Crítico | Supabase Vault + `.env` nunca commitado + pre-commit hook |
 | Webhook Stripe não processado | Baixa | Alto | Idempotência no handler + retry + log de falhas |
@@ -567,9 +515,6 @@ BREVO_API_KEY=
 
 # n8n
 N8N_WEBHOOK_URL=
-
-# Feature Flags
-WIRESET_ENABLED=false   # Manter false até Fase 3 aprovada
 
 # WhatsApp (opcional - Fase 2)
 TWILIO_ACCOUNT_SID=

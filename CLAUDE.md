@@ -9,7 +9,7 @@
 
 1. **PRD Completo**: `docs/prd.md` — stack, épicos, user stories, 3 fases, modelagem de dados
 2. **Plano Fase 2**: `docs/plan_fase_2.md` — épicos 7–11 (Admin, Estoque, CRM, Financeiro, Automações)
-3. **Plano Fase 3**: `docs/plan_fase_3.md` — épicos 12–16 (IA, Wireset, Marketplaces, Mobile, Observabilidade)
+3. **Plano Fase 3**: `docs/plan_fase_3.md` — épicos 12–16 (IA, Expansão de Catálogo, Marketplaces, Mobile, Observabilidade)
 4. **Memória do Projeto**: `C:\Users\rlcun\.claude\projects\C--Projetos-a2tech\memory\MEMORY.md`
 
 **NUNCA** tome decisões sem consultar o PRD. Atualizar este arquivo (CLAUDE.md) quando iniciar cada fase.
@@ -30,7 +30,7 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 |------|---------|------|-----|
 | **Fase 1** ✅ | 0–3 meses | Landing Page + E-commerce (4 produtos FitaCabo) | v1.0.0 |
 | **Fase 2** 🚀 | 3–6 meses | Painel Admin + Estoque + CRM + Financeiro + Automações n8n | v2.0.0 |
-| **Fase 3** | 6–18 meses | IA generativa + Integração Wireset + Marketplaces + App Mobile | v3.0.0 |
+| **Fase 3** | 6–18 meses | IA generativa + Expansão de catálogo orgânica + Marketplaces + App Mobile | v3.0.0 |
 
 **Estamos na Fase 2.** Detalhes da Fase 3 em `docs/plan_fase_3.md` — apenas informativo por agora.
 
@@ -40,14 +40,14 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 
 ### Problema & Solução
 
-**Cliente**: Proprietário da **Wireset** (equipamentos de elevação/amarração) com impedimentos societários
+**Cliente**: Empreendedor do segmento de equipamentos de elevação e amarração de cargas
 
-**Solução**: Criar empresa independente **A2Tech** como revendedora
+**Solução**: Empresa independente **A2Tech** como revendedora, sem vínculo societário com outros players do setor
 
 **Fase Atual**:
 - A2Tech vende 4 produtos iniciais da **FitaCabo** (https://fitacabo.com.br)
-- Arquitetura preparada desde o início para absorver **todo catálogo da Wireset** (quando for aprovado na Fase 3)
-- Zero impacto entre fornecedores: usamos `fornecedor_id` em todas as tabelas
+- Catálogo cresce de forma **orgânica** — novos fornecedores e produtos são cadastrados manualmente pelo admin
+- Cada fornecedor é independente: `fornecedor_id` em todas as tabelas garante separação e rastreabilidade
 
 ### Produtos (Fase 1 — FitaCabo)
 
@@ -60,7 +60,7 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - Lançar e-commerce (✅ Fase 1)
 - Atingir 10 pedidos/mês (Mês 2)
 - Automatizar 80% dos alertas via n8n (Fase 2)
-- Preparar integração Wireset (Fase 3)
+- Expandir catálogo com novos fornecedores (Fase 3)
 
 ---
 
@@ -270,7 +270,6 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 ### Princípios Arquiteturais
 
 - **Multi-fornecedor por design**: `fornecedor_id` em todas as tabelas desde o início
-- **Feature flags**: `WIRESET_ENABLED` controla exibição de produtos Wireset (Fase 3)
 - **Zero secrets**: variáveis via `.env` + Supabase Vault
 - **RLS (Row Level Security)**: controle de acesso por linha no PostgreSQL
 - **Idempotência**: webhooks Stripe testam duplicidade antes de processar
@@ -336,8 +335,8 @@ Ferramentas para integração com serviços externos. Claude pode usar MCPs para
 
 **Tabelas principais** (ver PRD para detalhes completos):
 
-- `fornecedores` — Sellers (FitaCabo, Wireset)
-- `produtos` — Catálogo com `fornecedor_id` + `ativo` (feature flag)
+- `fornecedores` — Sellers cadastrados manualmente (ex: FitaCabo)
+- `produtos` — Catálogo com `fornecedor_id` + `ativo`
 - `usuarios` — Clientes + staff (role: client, employee, admin)
 - `pedidos` — Vendas com status (`pendente` → `pago` → `processando` → `enviado` → `entregue` | `cancelado`)
 - `itens_pedido` — Linhas de pedido (snapshot do preço)

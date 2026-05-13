@@ -19,7 +19,9 @@ Nunca tome decisões de arquitetura sem consultar esse documento.
 Tag v2.0.0 em produção e aprovada.
 
 ## Objetivo da Fase 3
-Entregar IA generativa no admin, integração Wireset, marketplaces e app mobile até v3.0.0.
+Entregar IA generativa no admin, expansão orgânica de catálogo, marketplaces e app mobile até v3.0.0.
+
+> **Importante**: A A2Tech não tem vínculo com outras empresas do setor. O catálogo cresce de forma orgânica — novos fornecedores e produtos são cadastrados manualmente pelo admin, sem integrações automáticas externas.
 
 ## Épicos e User Stories
 
@@ -28,12 +30,12 @@ Entregar IA generativa no admin, integração Wireset, marketplaces e app mobile
   - [ ] Chat no painel: "mostre vendas desta semana" → gráfico gerado dinamicamente
   - [ ] Ação via linguagem natural: "crie campanha para clientes inativos há 30 dias"
 
-### ÉPICO 13 — Integração Wireset
-- US-27 [Architect + Code]: Raspagem e importação de produtos Wireset
-  - [ ] `scripts/scrape-wireset.ts` com `fornecedor_id = 'wireset'`
-  - [ ] Feature flag `WIRESET_ENABLED=true` em `.env`
-- US-28 [Code]: Exibição dos produtos Wireset no e-commerce (com feature flag)
-  - [ ] Zero impacto nos produtos FitaCabo
+### ÉPICO 13 — Expansão de Catálogo
+- US-27 [Code]: Suporte a múltiplos fornecedores ativos no catálogo
+  - [ ] Filtro por fornecedor/marca na listagem de produtos
+  - [ ] Admin cadastra novos fornecedores e produtos manualmente
+- US-28 [Code]: Página de detalhe por fornecedor/marca
+  - [ ] Listagem de produtos agrupada por fornecedor no catálogo
 
 ### ÉPICO 14 — Marketplaces
 - US-29 [Code]: Integração Mercado Livre (listagem de produtos via API ML)
