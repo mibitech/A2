@@ -466,9 +466,10 @@ interface LotesModalProps {
   produto: ProdutoAdmin
   fornecedores: Fornecedor[]
   onClose: () => void
+  onEstoqueChanged: () => void
 }
 
-function LotesModal({ produto, fornecedores, onClose }: LotesModalProps) {
+function LotesModal({ produto, fornecedores, onClose, onEstoqueChanged }: LotesModalProps) {
   const { loteAtivo, lotesAguardando, lotesEncerrados, isLoading, carregar, criar, ativar, encerrar, atualizar } = useLotesAdmin(produto.id)
   const [novoForm, setNovoForm] = useState({ fornecedor_id: '', numero_lote: '', quantidade_inicial: '', observacoes: '' })
   const [editandoId, setEditandoId] = useState<string | null>(null)
@@ -500,6 +501,7 @@ function LotesModal({ produto, fornecedores, onClose }: LotesModalProps) {
     if (!success) { setErro(error); return }
     setMostrarNovo(false)
     setNovoForm({ fornecedor_id: '', numero_lote: '', quantidade_inicial: '', observacoes: '' })
+    onEstoqueChanged()
   }
 
   async function handleEditar(e: React.FormEvent) {
@@ -526,7 +528,8 @@ function LotesModal({ produto, fornecedores, onClose }: LotesModalProps) {
     setSalvando(true); setErro(null)
     const { success, error } = await ativar(id)
     setSalvando(false)
-    if (!success) setErro(error)
+    if (!success) { setErro(error); return }
+    onEstoqueChanged()
   }
 
   async function handleEncerrar(id: string) {
@@ -534,7 +537,8 @@ function LotesModal({ produto, fornecedores, onClose }: LotesModalProps) {
     setSalvando(true); setErro(null)
     const { success, error } = await encerrar(id)
     setSalvando(false)
-    if (!success) setErro(error)
+    if (!success) { setErro(error); return }
+    onEstoqueChanged()
   }
 
   const inputCls = 'w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500'
@@ -1063,6 +1067,7 @@ export default function AdminEstoquePage() {
           produto={modalLotes}
           fornecedores={fornecedores}
           onClose={() => setModalLotes(null)}
+          onEstoqueChanged={reload}
         />
       )}
     </div>

@@ -112,3 +112,14 @@ export async function atualizarLote(
   if (error) return { error: error.message }
   return { error: null }
 }
+
+export async function atualizarEstoqueLote(
+  loteId: string,
+  novoEstoque: number
+): Promise<{ error: string | null }> {
+  const { error } = await (supabase.from('lotes') as any)
+    .update({ estoque_atual: novoEstoque })
+    .eq('id', loteId)
+  if (error) return { error: error.message }
+  return { error: null }
+}

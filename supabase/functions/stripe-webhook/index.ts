@@ -81,7 +81,17 @@ serve(async (req) => {
   const shortId = pedido.id.slice(0, 8).toUpperCase()
 
   for (const item of cartItems) {
-    // Buscar lote ativo do produto para rastreabilidade
+    // Ler estoque atual do produto ANTES de qualquer alteração (para movimentação correta)
+    const { data: produto } = await supabase
+      .from('produtos')
+      .select('estoque')
+      .eq('id', item.productId)
+      .maybeSingle()
+
+    const estoqueAnterior = (produto as { estoque: number } | null)?.estoque ?? 0
+    const estoqueNovo = Math.max(0, estoqueAnterior - item.quantity)
+
+    // Buscar lote ativo para rastreabilidade
     let loteId: string | null = null
     let numeroLote: string | null = null
     let fornecedorId: string | null = null
@@ -98,9 +108,8 @@ serve(async (req) => {
       numeroLote = loteAtivo.numero_lote
       fornecedorId = loteAtivo.fornecedor_id
 
-      // Decrementar estoque do lote
-      const estoqueAtualLote = (loteAtivo as { estoque_atual: number }).estoque_atual
-      const estoqueNovoLote = Math.max(0, estoqueAtualLote - item.quantity)
+      // Decrementar lote — o trigger sync_estoque_on_lote_change cuida de produtos.estoque
+      const estoqueNovoLote = Math.max(0, (loteAtivo as { estoque_atual: number }).estoque_atual - item.quantity)
       await (supabase.from('lotes') as any)
         .update({ estoque_atual: estoqueNovoLote })
         .eq('id', loteAtivo.id)
@@ -120,24 +129,7 @@ serve(async (req) => {
 
     if (itemErr) console.error('Erro ao criar item:', itemErr)
 
-    // Atualizar estoque do produto
-    const { data: produto, error: prodErr } = await supabase
-      .from('produtos')
-      .select('estoque')
-      .eq('id', item.productId)
-      .single()
-
-    if (prodErr || !produto) {
-      console.error(`Produto não encontrado: ${item.productId}`, prodErr)
-      continue
-    }
-
-    const estoqueAnterior = (produto as { estoque: number }).estoque
-    const estoqueNovo = Math.max(0, estoqueAnterior - item.quantity)
-
-    await (supabase.from('produtos') as any).update({ estoque: estoqueNovo }).eq('id', item.productId)
-
-    // Registrar movimentação de estoque
+    // Registrar movimentação com valores capturados antes da alteração do lote
     await (supabase.from('movimentacoes_estoque') as any).insert({
       produto_id: item.productId,
       usuario_id: null,

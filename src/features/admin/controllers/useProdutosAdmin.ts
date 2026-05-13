@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuthContext } from '@features/auth/contexts/AuthContext'
 import * as service from '../services/produtos.admin.service'
 import type { ProdutoAdmin, MovimentacaoEstoque } from '../services/produtos.admin.service'
+import { buscarLoteAtivo, atualizarEstoqueLote } from '../services/lotes.admin.service'
 import type { Database } from '@/types/supabase'
 
 type ProdutoInsert = Database['public']['Tables']['produtos']['Insert']
@@ -69,14 +70,20 @@ export function useProdutosAdmin() {
   ) => {
     if (!user) return { success: false, error: 'Usuário não autenticado' }
 
-    const novoEstoque =
-      tipo === 'entrada' ? produto.estoque + quantidade
-      : tipo === 'saida' ? produto.estoque - quantidade
-      : produto.estoque + quantidade
+    const delta = tipo === 'saida' ? -quantidade : quantidade
+    const novoEstoque = Math.max(0, produto.estoque + delta)
 
-    // Atualiza estoque no produto
-    const { error: errUpdate } = await service.updateProduto(produto.id, { estoque: novoEstoque })
-    if (errUpdate) return { success: false, error: errUpdate }
+    // Se há lote ativo, atualiza pelo lote (trigger sincroniza produtos.estoque automaticamente)
+    const { data: loteAtivo } = await buscarLoteAtivo(produto.id)
+    if (loteAtivo) {
+      const novoEstoqueLote = Math.max(0, loteAtivo.estoque_atual + delta)
+      const { error: errLote } = await atualizarEstoqueLote(loteAtivo.id, novoEstoqueLote)
+      if (errLote) return { success: false, error: errLote }
+    } else {
+      // Sem lote ativo: atualiza produtos.estoque diretamente
+      const { error: errUpdate } = await service.updateProduto(produto.id, { estoque: novoEstoque })
+      if (errUpdate) return { success: false, error: errUpdate }
+    }
 
     // Registra movimentação
     const { error: errMov } = await service.registrarMovimentacao({
