@@ -130,8 +130,24 @@ export default function AdminLayout() {
 
   return (
     <div className="flex min-h-screen bg-neutral-100">
-      {/* Sidebar */}
-      <aside className={`${collapsed ? 'w-16' : 'w-60'} bg-brand-900 text-white flex flex-col shrink-0 transition-all duration-200`}>
+      {/* Backdrop mobile — cobre o conteúdo quando sidebar está aberta */}
+      {!collapsed && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          onClick={toggleCollapsed}
+        />
+      )}
+
+      {/* Sidebar
+          Mobile: drawer fixo que desliza da esquerda (overlay)
+          Desktop: elemento flex estático que comprime o conteúdo */}
+      <aside className={[
+        'fixed inset-y-0 left-0 z-40 flex flex-col bg-brand-900 text-white shrink-0 transition-all duration-200',
+        'lg:relative lg:inset-auto lg:z-auto',
+        collapsed
+          ? '-translate-x-full lg:translate-x-0 lg:w-16'
+          : 'translate-x-0 w-60',
+      ].join(' ')}>
 
         {/* Logo + toggle */}
         <div className={`flex items-center border-b border-brand-800 ${collapsed ? 'justify-center px-0 py-4' : 'justify-between px-5 py-4'}`}>
@@ -246,8 +262,21 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* Conteúdo principal */}
-      <main className="flex-1 overflow-auto">
+      {/* Conteúdo principal — min-w-0 evita overflow do flex */}
+      <main className="flex-1 min-w-0 overflow-auto">
+        {/* Barra superior mobile com botão de abrir sidebar */}
+        <div className="flex items-center gap-3 border-b border-neutral-200 bg-white px-4 py-3 lg:hidden">
+          <button
+            onClick={toggleCollapsed}
+            className="rounded-lg p-1.5 text-neutral-600 hover:bg-neutral-100 transition-colors"
+            title="Abrir menu"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <span className="text-sm font-semibold text-neutral-800">A2 Brasil Supplies — Admin</span>
+        </div>
         <Outlet />
       </main>
     </div>
