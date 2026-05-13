@@ -30,7 +30,8 @@ function ProductDetailPage() {
   }
 
   const handleBuyNow = () => {
-    handleAddToCart()
+    if (!product) return
+    if (!isInCart(product.id)) handleAddToCart()
     navigate('/carrinho')
   }
 
