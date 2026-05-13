@@ -206,17 +206,20 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - **Épico 10** — Financeiro Stripe (conciliação automática)
 - **Épico 11** — Automações n8n
 
-### 🚀 Próximas Ações (em ordem)
-1. **Configurar secret APP_URL** no Supabase Dashboard → Edge Functions → Secrets:
-   `APP_URL=https://www.a2brasilsupplies.com.br`
-2. **Testar checkout** com cartão Stripe de teste `4242 4242 4242 4242`
-3. **Deploy produção** em `91.99.217.157` (branch `main`):
-   ```bash
-   git pull && pnpm install --frozen-lockfile && pnpm build && pm2 restart a2tech
-   ```
-4. **Antes do go-live**: executar `supabase/scripts/preparar_producao.sql` no Supabase SQL Editor
-5. **Configurar WhatsApp real**: `/admin/site` → aba WhatsApp → número real
-6. **Desenvolvimento futuro**: sempre em branch `dev` → merge para `main` quando estável
+### ✅ Homologação Concluída — 2026-05-13
+- `APP_URL` configurado no Supabase (Edge Functions Secrets)
+- Checkout Stripe testado e aprovado
+- Deploy realizado em produção (`91.99.217.157`)
+- **Sistema em produção** — https://www.a2brasilsupplies.com.br
+
+### 🚀 Próximas Ações — Fase 2 (itens pendentes)
+1. **US-14** — E-mail confirmação de pedido: template Brevo + disparo após pedido pago
+2. **US-13 webhook** — Validar criação automática de pedido após pagamento Stripe confirmado
+3. **US-19** — Alertas estoque mínimo via n8n + WhatsApp (quando número configurado)
+4. **Épico 10** — Conciliação financeira automática via webhook Stripe
+5. **Épico 11** — Automações n8n (abandono de carrinho, NPS)
+6. **Configurar WhatsApp real**: `/admin/site` → aba WhatsApp → número real
+7. **Desenvolvimento**: sempre em branch `dev` → merge para `main` → produção
 
 ---
 
@@ -352,6 +355,6 @@ Ferramentas para integração com serviços externos. Claude pode usar MCPs para
 
 ---
 
-**Última atualização**: 2026-05-12 (sessão 2)
-**Versão**: v2.0.0-homologacao — Fase 2 + fix auth/SDK + fix Stripe imagem + branch dev
-**Commit**: `7db8832` | **Tag**: `v2.0.0-homologacao` | **Branches**: `main`, `dev`
+**Última atualização**: 2026-05-13
+**Versão**: v2.0.0 — **EM PRODUÇÃO** ✅ (homologação aprovada em 2026-05-13)
+**Commit**: `9a1e354` | **Tag**: `v2.0.0-homologacao` | **Branches**: `main`, `dev`
