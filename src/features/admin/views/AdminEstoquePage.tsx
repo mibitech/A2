@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useProdutosAdmin } from '../controllers/useProdutosAdmin'
 import type { ProdutoAdmin } from '../controllers/useProdutosAdmin'
+import { useLotesAdmin } from '../controllers/useLotesAdmin'
+import { useFornecedoresAdmin } from '../controllers/useFornecedoresAdmin'
+import type { Fornecedor } from '../controllers/useFornecedoresAdmin'
 import Pagination from '@components/ui/Pagination'
-
-const FORNECEDOR_FITACABO = '00000000-0000-0000-0000-000000000001'
 
 // =====================================================
 // FORMULÁRIO DE PRODUTO
@@ -21,6 +22,7 @@ interface ProdutoFormData {
   peso: string
   ativo: boolean
   destaque: boolean
+  fornecedor_id: string
 }
 
 const formVazio: ProdutoFormData = {
@@ -36,6 +38,7 @@ const formVazio: ProdutoFormData = {
   peso: '',
   ativo: true,
   destaque: false,
+  fornecedor_id: '',
 }
 
 function slugify(text: string) {
@@ -208,13 +211,14 @@ function HistoricoModal({ produto, onClose, getMovimentacoes }: HistoricoModalPr
 // =====================================================
 interface FormModalProps {
   produto: ProdutoAdmin | null
+  fornecedores: Fornecedor[]
   onClose: () => void
   onCreate: (data: ProdutoFormData) => Promise<{ success: boolean; produto?: ProdutoAdmin | null; error?: string }>
   onUpdate: (id: string, data: ProdutoFormData) => Promise<{ success: boolean; error?: string }>
   uploadImagem: (file: File, produtoId: string) => Promise<{ url: string | null; error: string | null }>
 }
 
-function FormModal({ produto, onClose, onCreate, onUpdate, uploadImagem }: FormModalProps) {
+function FormModal({ produto, fornecedores, onClose, onCreate, onUpdate, uploadImagem }: FormModalProps) {
   const isEdit = !!produto
   const [form, setForm] = useState<ProdutoFormData>(
     produto
@@ -231,8 +235,9 @@ function FormModal({ produto, onClose, onCreate, onUpdate, uploadImagem }: FormM
           peso: produto.peso?.toString() ?? '',
           ativo: produto.ativo,
           destaque: produto.destaque,
+          fornecedor_id: (produto as any).fornecedor_id ?? '',
         }
-      : formVazio
+      : { ...formVazio, fornecedor_id: fornecedores.find(f => f.ativo)?.id ?? '' }
   )
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -270,7 +275,7 @@ function FormModal({ produto, onClose, onCreate, onUpdate, uploadImagem }: FormM
     setSaving(true)
 
     const payload = {
-      fornecedor_id: FORNECEDOR_FITACABO,
+      fornecedor_id: form.fornecedor_id,
       nome: form.nome.trim(),
       slug: form.slug.trim(),
       descricao: form.descricao.trim() || null,
@@ -379,6 +384,17 @@ function FormModal({ produto, onClose, onCreate, onUpdate, uploadImagem }: FormM
                 className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand" />
             </div>
 
+            <div>
+              <label className="mb-1 block text-sm font-medium text-neutral-700">Fornecedor *</label>
+              <select name="fornecedor_id" value={form.fornecedor_id} onChange={handleChange} required
+                className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand">
+                <option value="">Selecione...</option>
+                {fornecedores.filter(f => f.ativo).map(f => (
+                  <option key={f.id} value={f.id}>{f.nome}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
                 <input type="checkbox" name="ativo" checked={form.ativo} onChange={handleChange}
@@ -444,6 +460,287 @@ function FormModal({ produto, onClose, onCreate, onUpdate, uploadImagem }: FormM
 }
 
 // =====================================================
+// MODAL DE LOTES
+// =====================================================
+interface LotesModalProps {
+  produto: ProdutoAdmin
+  fornecedores: Fornecedor[]
+  onClose: () => void
+}
+
+function LotesModal({ produto, fornecedores, onClose }: LotesModalProps) {
+  const { loteAtivo, lotesAguardando, lotesEncerrados, isLoading, carregar, criar, ativar, encerrar, atualizar } = useLotesAdmin(produto.id)
+  const [novoForm, setNovoForm] = useState({ fornecedor_id: '', numero_lote: '', quantidade_inicial: '', observacoes: '' })
+  const [editandoId, setEditandoId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({ numero_lote: '', fornecedor_id: '', observacoes: '' })
+  const [salvando, setSalvando] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
+  const [mostrarNovo, setMostrarNovo] = useState(false)
+
+  useEffect(() => { carregar() }, [carregar])
+
+  const nomeFornecedor = (id: string) => fornecedores.find(f => f.id === id)?.nome ?? '—'
+
+  async function handleCriar(e: React.FormEvent) {
+    e.preventDefault()
+    if (!novoForm.fornecedor_id || !novoForm.numero_lote || !novoForm.quantidade_inicial) {
+      setErro('Preencha fornecedor, número do lote e quantidade'); return
+    }
+    setSalvando(true); setErro(null)
+    const qtd = parseInt(novoForm.quantidade_inicial)
+    const { success, error } = await criar({
+      produto_id: produto.id,
+      fornecedor_id: novoForm.fornecedor_id,
+      numero_lote: novoForm.numero_lote.trim(),
+      quantidade_inicial: qtd,
+      estoque_atual: qtd,
+      observacoes: novoForm.observacoes.trim() || undefined,
+    })
+    setSalvando(false)
+    if (!success) { setErro(error); return }
+    setMostrarNovo(false)
+    setNovoForm({ fornecedor_id: '', numero_lote: '', quantidade_inicial: '', observacoes: '' })
+  }
+
+  async function handleEditar(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editandoId) return
+    setSalvando(true); setErro(null)
+    const { success, error } = await atualizar(editandoId, {
+      numero_lote: editForm.numero_lote,
+      fornecedor_id: editForm.fornecedor_id,
+      observacoes: editForm.observacoes || undefined,
+    })
+    setSalvando(false)
+    if (!success) { setErro(error); return }
+    setEditandoId(null)
+  }
+
+  function iniciarEdicao(lote: { id: string; numero_lote: string; fornecedor_id: string; observacoes: string | null }) {
+    setEditandoId(lote.id)
+    setEditForm({ numero_lote: lote.numero_lote, fornecedor_id: lote.fornecedor_id, observacoes: lote.observacoes ?? '' })
+    setErro(null)
+  }
+
+  async function handleAtivar(id: string) {
+    setSalvando(true); setErro(null)
+    const { success, error } = await ativar(id)
+    setSalvando(false)
+    if (!success) setErro(error)
+  }
+
+  async function handleEncerrar(id: string) {
+    if (!confirm('Encerrar este lote manualmente?')) return
+    setSalvando(true); setErro(null)
+    const { success, error } = await encerrar(id)
+    setSalvando(false)
+    if (!success) setErro(error)
+  }
+
+  const inputCls = 'w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500'
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 py-8 overflow-y-auto">
+      <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
+          <div>
+            <h2 className="text-lg font-bold text-neutral-800">Lotes de Estoque</h2>
+            <p className="text-sm text-neutral-500">{produto.nome}</p>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-100">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+          {isLoading ? (
+            <p className="text-center text-sm text-neutral-400 py-4">Carregando...</p>
+          ) : (
+            <>
+              {erro && <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{erro}</p>}
+
+              {/* ---- LOTE ATIVO ---- */}
+              <section>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Lote Ativo</p>
+                </div>
+
+                {loteAtivo ? (
+                  editandoId === loteAtivo.id ? (
+                    <form onSubmit={handleEditar} className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
+                      <p className="text-xs font-semibold text-blue-700">Editando lote ativo</p>
+                      <div>
+                        <label className="block text-xs font-medium text-neutral-600 mb-1">Número do Lote *</label>
+                        <input value={editForm.numero_lote} onChange={e => setEditForm(p => ({ ...p, numero_lote: e.target.value }))} className={inputCls} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-neutral-600 mb-1">Fornecedor *</label>
+                        <select value={editForm.fornecedor_id} onChange={e => setEditForm(p => ({ ...p, fornecedor_id: e.target.value }))} className={inputCls}>
+                          {fornecedores.filter(f => f.ativo).map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-neutral-600 mb-1">Observações</label>
+                        <input value={editForm.observacoes} onChange={e => setEditForm(p => ({ ...p, observacoes: e.target.value }))} className={inputCls} />
+                      </div>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => setEditandoId(null)} className="flex-1 rounded-lg border border-neutral-300 py-1.5 text-xs font-medium text-neutral-700">Cancelar</button>
+                        <button type="submit" disabled={salvando} className="flex-1 rounded-lg bg-blue-600 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{salvando ? 'Salvando...' : 'Salvar'}</button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-1 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-neutral-800">{loteAtivo.numero_lote}</span>
+                            <span className="rounded-full bg-green-200 px-2 py-0.5 text-xs font-medium text-green-800">Ativo</span>
+                          </div>
+                          <p className="text-xs text-neutral-600">Fornecedor: <strong>{loteAtivo.fornecedor?.nome ?? nomeFornecedor(loteAtivo.fornecedor_id)}</strong></p>
+                          <div className="flex gap-4 text-xs text-neutral-600">
+                            <span>Inicial: <strong>{loteAtivo.quantidade_inicial}</strong> un.</span>
+                            <span>Atual: <strong className={loteAtivo.estoque_atual <= 5 ? 'text-amber-600' : ''}>{loteAtivo.estoque_atual}</strong> un.</span>
+                          </div>
+                          {loteAtivo.observacoes && <p className="text-xs text-neutral-400 italic">{loteAtivo.observacoes}</p>}
+                          <p className="text-xs text-neutral-400">{new Date(loteAtivo.created_at).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                        <div className="flex flex-col gap-1 shrink-0">
+                          <button onClick={() => iniciarEdicao(loteAtivo)} className="text-xs text-blue-600 hover:underline">Editar</button>
+                          <button onClick={() => handleEncerrar(loteAtivo.id)} disabled={salvando} className="text-xs text-red-500 hover:underline disabled:opacity-50">Encerrar</button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                ) : (
+                  <div className="rounded-lg border-2 border-dashed border-neutral-200 p-4 text-center">
+                    <p className="text-sm text-neutral-400">Nenhum lote ativo.</p>
+                    <p className="text-xs text-neutral-400 mt-0.5">Cadastre um lote abaixo e clique em "Ativar".</p>
+                  </div>
+                )}
+              </section>
+
+              {/* ---- LOTES AGUARDANDO ---- */}
+              <section>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+                    Aguardando ({lotesAguardando.length})
+                  </p>
+                  {!mostrarNovo && (
+                    <button onClick={() => setMostrarNovo(true)} className="text-xs font-semibold text-brand-600 hover:underline">
+                      + Novo lote
+                    </button>
+                  )}
+                </div>
+
+                {/* Formulário novo lote */}
+                {mostrarNovo && (
+                  <form onSubmit={handleCriar} className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3 mb-3">
+                    <p className="text-xs font-semibold text-amber-700">Novo lote — ficará como "Aguardando" até ser ativado</p>
+                    <div>
+                      <label className="block text-xs font-medium text-neutral-600 mb-1">Fornecedor *</label>
+                      <select value={novoForm.fornecedor_id} onChange={e => setNovoForm(p => ({ ...p, fornecedor_id: e.target.value }))} className={inputCls}>
+                        <option value="">Selecione...</option>
+                        {fornecedores.filter(f => f.ativo).map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-neutral-600 mb-1">Número do Lote *</label>
+                      <input value={novoForm.numero_lote} onChange={e => setNovoForm(p => ({ ...p, numero_lote: e.target.value }))} placeholder="ex: LOT-2025-001" className={inputCls} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-neutral-600 mb-1">Quantidade inicial (un.) *</label>
+                      <input type="number" min="1" value={novoForm.quantidade_inicial} onChange={e => setNovoForm(p => ({ ...p, quantidade_inicial: e.target.value }))} className={inputCls} />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-neutral-600 mb-1">Observações</label>
+                      <input value={novoForm.observacoes} onChange={e => setNovoForm(p => ({ ...p, observacoes: e.target.value }))} placeholder="Validade, nota fiscal, etc." className={inputCls} />
+                    </div>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => { setMostrarNovo(false); setErro(null) }} className="flex-1 rounded-lg border border-neutral-300 py-1.5 text-xs font-medium text-neutral-700">Cancelar</button>
+                      <button type="submit" disabled={salvando} className="flex-1 rounded-lg bg-amber-600 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{salvando ? 'Criando...' : 'Criar Lote'}</button>
+                    </div>
+                  </form>
+                )}
+
+                {lotesAguardando.length === 0 && !mostrarNovo ? (
+                  <p className="text-xs text-neutral-400 text-center py-2">Nenhum lote aguardando</p>
+                ) : (
+                  <div className="space-y-2">
+                    {lotesAguardando.map(l => (
+                      <div key={l.id} className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                        {editandoId === l.id ? (
+                          <form onSubmit={handleEditar} className="space-y-2">
+                            <input value={editForm.numero_lote} onChange={e => setEditForm(p => ({ ...p, numero_lote: e.target.value }))} className={inputCls} placeholder="Número do lote" />
+                            <select value={editForm.fornecedor_id} onChange={e => setEditForm(p => ({ ...p, fornecedor_id: e.target.value }))} className={inputCls}>
+                              {fornecedores.filter(f => f.ativo).map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                            </select>
+                            <input value={editForm.observacoes} onChange={e => setEditForm(p => ({ ...p, observacoes: e.target.value }))} className={inputCls} placeholder="Observações" />
+                            <div className="flex gap-2">
+                              <button type="button" onClick={() => setEditandoId(null)} className="flex-1 rounded-lg border border-neutral-300 py-1 text-xs text-neutral-700">Cancelar</button>
+                              <button type="submit" disabled={salvando} className="flex-1 rounded-lg bg-blue-600 py-1 text-xs font-semibold text-white disabled:opacity-50">Salvar</button>
+                            </div>
+                          </form>
+                        ) : (
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="space-y-0.5 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-semibold text-neutral-800">{l.numero_lote}</span>
+                                <span className="rounded-full bg-amber-200 px-2 py-0.5 text-xs font-medium text-amber-800">Aguardando</span>
+                              </div>
+                              <p className="text-xs text-neutral-600">Fornecedor: <strong>{l.fornecedor?.nome ?? nomeFornecedor(l.fornecedor_id)}</strong></p>
+                              <div className="flex gap-4 text-xs text-neutral-600">
+                                <span>Inicial: <strong>{l.quantidade_inicial}</strong> un.</span>
+                                <span>Atual: <strong>{l.estoque_atual}</strong> un.</span>
+                              </div>
+                              {l.observacoes && <p className="text-xs text-neutral-400 italic">{l.observacoes}</p>}
+                            </div>
+                            <div className="flex flex-col gap-1 shrink-0">
+                              <button onClick={() => handleAtivar(l.id)} disabled={salvando} className="rounded-lg bg-green-600 px-2 py-1 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50">Ativar</button>
+                              <button onClick={() => iniciarEdicao(l)} className="text-xs text-blue-600 hover:underline">Editar</button>
+                              <button onClick={() => handleEncerrar(l.id)} disabled={salvando} className="text-xs text-red-500 hover:underline disabled:opacity-50">Encerrar</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* ---- LOTES ENCERRADOS ---- */}
+              {lotesEncerrados.length > 0 && (
+                <section>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">Encerrados ({lotesEncerrados.length})</p>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {lotesEncerrados.map(l => (
+                      <div key={l.id} className="rounded-lg border border-neutral-100 bg-neutral-50 p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-neutral-500">{l.numero_lote}</span>
+                          <span className="text-xs text-neutral-400">Encerrado</span>
+                        </div>
+                        <p className="text-xs text-neutral-400">Fornecedor: {l.fornecedor?.nome ?? nomeFornecedor(l.fornecedor_id)}</p>
+                        <div className="flex gap-4 text-xs text-neutral-400 mt-0.5">
+                          <span>Inicial: {l.quantidade_inicial} un.</span>
+                          <span>Final: {l.estoque_atual} un.</span>
+                          <span>{new Date(l.created_at).toLocaleDateString('pt-BR')}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// =====================================================
 // CABEÇALHO ORDENÁVEL
 // =====================================================
 type SortDir = 'asc' | 'desc'
@@ -474,6 +771,7 @@ function ThSort({ label, col, current, dir, onSort, align = 'left' }: {
 // =====================================================
 export default function AdminEstoquePage() {
   const { produtos, isLoading, error, reload, create, update, remove, uploadImagem, ajustarEstoque, getMovimentacoes } = useProdutosAdmin()
+  const { fornecedores } = useFornecedoresAdmin()
 
   const [busca, setBusca] = useState('')
   const [filtroStatus, setFiltroStatus] = useState<'todos' | 'ativo' | 'inativo'>('todos')
@@ -490,6 +788,7 @@ export default function AdminEstoquePage() {
   const [modalForm, setModalForm] = useState<{ aberto: boolean; produto: ProdutoAdmin | null }>({ aberto: false, produto: null })
   const [modalAjuste, setModalAjuste] = useState<ProdutoAdmin | null>(null)
   const [modalHistorico, setModalHistorico] = useState<ProdutoAdmin | null>(null)
+  const [modalLotes, setModalLotes] = useState<ProdutoAdmin | null>(null)
   const [feedback, setFeedback] = useState<{ tipo: 'sucesso' | 'erro'; mensagem: string } | null>(null)
 
   function showFeedback(tipo: 'sucesso' | 'erro', mensagem: string) {
@@ -663,6 +962,9 @@ export default function AdminEstoquePage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => setModalLotes(p)} title="Lotes" className="rounded-lg p-1.5 text-neutral-400 hover:bg-amber-50 hover:text-amber-600 transition-colors">
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                      </button>
                       <button onClick={() => setModalHistorico(p)} title="Histórico" className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors">
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                       </button>
@@ -718,6 +1020,7 @@ export default function AdminEstoquePage() {
                 </div>
               </div>
               <div className="flex items-center gap-2 pt-3 border-t border-neutral-100">
+                <button onClick={() => setModalLotes(p)} className="flex-1 rounded-lg border border-amber-200 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-50 transition-colors">Lotes</button>
                 <button onClick={() => setModalHistorico(p)} className="flex-1 rounded-lg border border-neutral-200 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition-colors">Histórico</button>
                 <button onClick={() => setModalAjuste(p)} className="flex-1 rounded-lg border border-neutral-200 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition-colors">Ajustar</button>
                 <button onClick={() => setModalForm({ aberto: true, produto: p })} className="flex-1 rounded-lg bg-brand py-1.5 text-xs font-medium text-white hover:bg-brand-dark transition-colors">Editar</button>
@@ -733,6 +1036,7 @@ export default function AdminEstoquePage() {
       {modalForm.aberto && (
         <FormModal
           produto={modalForm.produto}
+          fornecedores={fornecedores}
           onClose={() => setModalForm({ aberto: false, produto: null })}
           onCreate={handleCreate}
           onUpdate={handleUpdate}
@@ -751,6 +1055,14 @@ export default function AdminEstoquePage() {
           produto={modalHistorico}
           onClose={() => setModalHistorico(null)}
           getMovimentacoes={getMovimentacoes}
+        />
+      )}
+      {modalLotes && (
+        <LotesModal
+          key={modalLotes.id}
+          produto={modalLotes}
+          fornecedores={fornecedores}
+          onClose={() => setModalLotes(null)}
         />
       )}
     </div>

@@ -246,28 +246,43 @@ export type Database = {
       fornecedores: {
         Row: {
           ativo: boolean | null
+          cnpj: string | null
+          contato: string | null
           created_at: string | null
+          email: string | null
+          endereco: Json | null
           id: string
           nome: string
           slug: string
+          telefone: string | null
           updated_at: string | null
           url_site: string | null
         }
         Insert: {
           ativo?: boolean | null
+          cnpj?: string | null
+          contato?: string | null
           created_at?: string | null
+          email?: string | null
+          endereco?: Json | null
           id?: string
           nome: string
           slug: string
+          telefone?: string | null
           updated_at?: string | null
           url_site?: string | null
         }
         Update: {
           ativo?: boolean | null
+          cnpj?: string | null
+          contato?: string | null
           created_at?: string | null
+          email?: string | null
+          endereco?: Json | null
           id?: string
           nome?: string
           slug?: string
+          telefone?: string | null
           updated_at?: string | null
           url_site?: string | null
         }
@@ -318,7 +333,10 @@ export type Database = {
       itens_pedido: {
         Row: {
           created_at: string | null
+          fornecedor_id: string | null
           id: string
+          lote_id: string | null
+          numero_lote: string | null
           pedido_id: string
           preco_unitario: number
           produto_id: string
@@ -327,7 +345,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          fornecedor_id?: string | null
           id?: string
+          lote_id?: string | null
+          numero_lote?: string | null
           pedido_id: string
           preco_unitario: number
           produto_id: string
@@ -336,7 +357,10 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          fornecedor_id?: string | null
           id?: string
+          lote_id?: string | null
+          numero_lote?: string | null
           pedido_id?: string
           preco_unitario?: number
           produto_id?: string
@@ -344,6 +368,20 @@ export type Database = {
           subtotal?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "itens_pedido_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "itens_pedido_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "itens_pedido_pedido_id_fkey"
             columns: ["pedido_id"]
@@ -403,6 +441,60 @@ export type Database = {
             columns: ["criado_por"]
             isOneToOne: false
             referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lotes: {
+        Row: {
+          created_at: string
+          estoque_atual: number
+          fornecedor_id: string
+          id: string
+          numero_lote: string
+          observacoes: string | null
+          produto_id: string
+          quantidade_inicial: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          estoque_atual?: number
+          fornecedor_id: string
+          id?: string
+          numero_lote: string
+          observacoes?: string | null
+          produto_id: string
+          quantidade_inicial: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          estoque_atual?: number
+          fornecedor_id?: string
+          id?: string
+          numero_lote?: string
+          observacoes?: string | null
+          produto_id?: string
+          quantidade_inicial?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lotes_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lotes_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
             referencedColumns: ["id"]
           },
         ]

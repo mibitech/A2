@@ -77,23 +77,50 @@ serve(async (req) => {
     return new Response('Erro interno', { status: 500 })
   }
 
-  // Criar itens do pedido
-  const itensPedido = cartItems.map((item) => ({
-    pedido_id: pedido.id,
-    produto_id: item.productId,
-    quantidade: item.quantity,
-    preco_unitario: item.productPrice,
-    subtotal: item.productPrice * item.quantity,
-  }))
+  // Criar itens do pedido com rastreabilidade de lote
+  const shortId = pedido.id.slice(0, 8).toUpperCase()
 
-  const { error: itensErr } = await supabase.from('itens_pedido').insert(itensPedido)
-
-  if (itensErr) {
-    console.error('Erro ao criar itens:', itensErr)
-  }
-
-  // Atualizar estoque para cada item vendido
   for (const item of cartItems) {
+    // Buscar lote ativo do produto para rastreabilidade
+    let loteId: string | null = null
+    let numeroLote: string | null = null
+    let fornecedorId: string | null = null
+
+    const { data: loteAtivo } = await supabase
+      .from('lotes')
+      .select('id, numero_lote, fornecedor_id, estoque_atual')
+      .eq('produto_id', item.productId)
+      .eq('status', 'ativo')
+      .maybeSingle()
+
+    if (loteAtivo) {
+      loteId = loteAtivo.id
+      numeroLote = loteAtivo.numero_lote
+      fornecedorId = loteAtivo.fornecedor_id
+
+      // Decrementar estoque do lote
+      const estoqueAtualLote = (loteAtivo as { estoque_atual: number }).estoque_atual
+      const estoqueNovoLote = Math.max(0, estoqueAtualLote - item.quantity)
+      await (supabase.from('lotes') as any)
+        .update({ estoque_atual: estoqueNovoLote })
+        .eq('id', loteAtivo.id)
+    }
+
+    // Inserir item com referência ao lote
+    const { error: itemErr } = await supabase.from('itens_pedido').insert({
+      pedido_id: pedido.id,
+      produto_id: item.productId,
+      quantidade: item.quantity,
+      preco_unitario: item.productPrice,
+      subtotal: item.productPrice * item.quantity,
+      lote_id: loteId,
+      fornecedor_id: fornecedorId,
+      numero_lote: numeroLote,
+    } as never)
+
+    if (itemErr) console.error('Erro ao criar item:', itemErr)
+
+    // Atualizar estoque do produto
     const { data: produto, error: prodErr } = await supabase
       .from('produtos')
       .select('estoque')
@@ -108,31 +135,18 @@ serve(async (req) => {
     const estoqueAnterior = (produto as { estoque: number }).estoque
     const estoqueNovo = Math.max(0, estoqueAnterior - item.quantity)
 
-    const { error: updateErr } = await supabase
-      .from('produtos')
-      .update({ estoque: estoqueNovo } as never)
-      .eq('id', item.productId)
+    await (supabase.from('produtos') as any).update({ estoque: estoqueNovo }).eq('id', item.productId)
 
-    if (updateErr) {
-      console.error(`Erro ao atualizar estoque de ${item.productId}:`, updateErr)
-    }
-
-    // usuario_id = null para evitar FK error (cliente pode não estar na tabela usuarios)
-    const { error: movErr } = await supabase
-      .from('movimentacoes_estoque')
-      .insert({
-        produto_id: item.productId,
-        usuario_id: null,
-        tipo: 'saida',
-        quantidade: item.quantity,
-        estoque_anterior: estoqueAnterior,
-        estoque_posterior: estoqueNovo,
-        motivo: `Venda — Pedido #${pedido.id.split('-')[0].toUpperCase()}`,
-      } as never)
-
-    if (movErr) {
-      console.error(`Erro ao registrar movimentação de ${item.productId}:`, movErr)
-    }
+    // Registrar movimentação de estoque
+    await (supabase.from('movimentacoes_estoque') as any).insert({
+      produto_id: item.productId,
+      usuario_id: null,
+      tipo: 'saida',
+      quantidade: item.quantity,
+      estoque_anterior: estoqueAnterior,
+      estoque_posterior: estoqueNovo,
+      motivo: `Venda — Pedido #${shortId}${numeroLote ? ` (Lote: ${numeroLote})` : ''}`,
+    })
   }
 
   // Registrar entrada no fluxo de caixa (idempotente)
@@ -144,8 +158,6 @@ serve(async (req) => {
     .limit(1)
 
   if (!lancExistente || lancExistente.length === 0) {
-    const shortId = pedido.id.slice(0, 8).toUpperCase()
-
     // Buscar nome do cliente (best-effort)
     let clienteNome = 'cliente'
     const { data: usuario } = await supabase

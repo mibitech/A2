@@ -213,13 +213,16 @@ Entregar **Painel Admin + CRM/ERP** (Fase 2) até a tag **v2.0.0**.
 - **Sistema em produção** — https://www.a2brasilsupplies.com.br
 
 ### 🚀 Próximas Ações — Fase 2 (itens pendentes)
-1. **US-14** — E-mail confirmação de pedido: template Brevo + disparo após pedido pago
-2. **US-13 webhook** — Validar criação automática de pedido após pagamento Stripe confirmado
-3. **US-19** — Alertas estoque mínimo via n8n + WhatsApp (quando número configurado)
-4. **Épico 10** — Conciliação financeira automática via webhook Stripe
-5. **Épico 11** — Automações n8n (abandono de carrinho, NPS)
-6. **Configurar WhatsApp real**: `/admin/site` → aba WhatsApp → número real
-7. **Desenvolvimento**: sempre em branch `dev` → merge para `main` → produção
+1. **US-13 webhook** — Validar criação automática de pedido após pagamento Stripe confirmado (testar com `4242 4242 4242 4242`)
+2. **US-14** — Testar e-mail de confirmação chegando após pedido pago
+3. **SMTP do cliente (Locaweb)** — Migrar remetente de e-mail do Brevo SMTP para conta Locaweb do cliente. Atualizar 4 secrets no Supabase: `BREVO_SMTP_HOST` → `email-ssl.com.br`, `BREVO_SMTP_PORT` → `587`, `BREVO_SMTP_USER` → e-mail Locaweb, `BREVO_SMTP_PASS` → senha da conta Locaweb. Nenhum código muda, só os secrets.
+4. **US-19** — Alertas estoque mínimo via n8n + WhatsApp (quando número configurado)
+5. **Épico 10** — Conciliação financeira automática via webhook Stripe
+6. **Épico 11** — Automações n8n (abandono de carrinho, NPS)
+7. **Configurar WhatsApp real**: `/admin/site` → aba WhatsApp → número real
+8. **Stripe produção** — Trocar chaves de teste pelas reais quando conta Stripe for ativada
+9. **Frete real** — Melhor Envio/Correios quando tiver credenciais + pesos dos produtos
+10. **Desenvolvimento**: sempre em branch `dev` → merge para `main` → produção
 
 ---
 

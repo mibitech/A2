@@ -29,6 +29,7 @@ import AdminClientesPage from './features/admin/views/AdminClientesPage'
 import AdminFinanceiroPage from './features/admin/views/AdminFinanceiroPage'
 import AdminSitePage from './features/admin/views/AdminSitePage'
 import AdminCampanhasPage from './features/admin/views/AdminCampanhasPage'
+import AdminFornecedoresPage from './features/admin/views/AdminFornecedoresPage'
 import SobreNosPage from './features/sobre/views/SobreNosPage'
 import ContatosPage from './features/contatos/views/ContatosPage'
 import AcompanhePedidoPage from './features/pedidos/views/AcompanhePedidoPage'
@@ -108,6 +109,7 @@ function App() {
         <Route path="campanhas" element={<AdminCampanhasPage />} />
         <Route path="financeiro" element={<AdminFinanceiroPage />} />
         <Route path="site" element={<AdminSitePage />} />
+        <Route path="fornecedores" element={<AdminFornecedoresPage />} />
         <Route path="design-system" element={<DesignSystemPage />} />
       </Route>
 
