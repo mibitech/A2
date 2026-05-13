@@ -7,7 +7,7 @@ type ProdutoUpdate = Database['public']['Tables']['produtos']['Update']
 
 export interface ProdutoAdmin {
   id: string
-  fornecedorId: string
+  fornecedorId: string | null
   nome: string
   slug: string
   descricao: string | null

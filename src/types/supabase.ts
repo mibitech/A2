@@ -616,7 +616,7 @@ export type Database = {
           destaque: boolean | null
           dimensoes: Json | null
           estoque: number | null
-          fornecedor_id: string
+          fornecedor_id: string | null
           id: string
           imagens: string[] | null
           nome: string
@@ -637,7 +637,7 @@ export type Database = {
           destaque?: boolean | null
           dimensoes?: Json | null
           estoque?: number | null
-          fornecedor_id: string
+          fornecedor_id?: string | null
           id?: string
           imagens?: string[] | null
           nome: string
@@ -658,7 +658,7 @@ export type Database = {
           destaque?: boolean | null
           dimensoes?: Json | null
           estoque?: number | null
-          fornecedor_id?: string
+          fornecedor_id?: string | null
           id?: string
           imagens?: string[] | null
           nome?: string

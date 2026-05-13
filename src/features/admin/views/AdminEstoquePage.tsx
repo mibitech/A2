@@ -237,7 +237,7 @@ function FormModal({ produto, fornecedores, onClose, onCreate, onUpdate, uploadI
           destaque: produto.destaque,
           fornecedor_id: (produto as any).fornecedor_id ?? '',
         }
-      : { ...formVazio, fornecedor_id: fornecedores.find(f => f.ativo)?.id ?? '' }
+      : { ...formVazio }
   )
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -275,7 +275,7 @@ function FormModal({ produto, fornecedores, onClose, onCreate, onUpdate, uploadI
     setSaving(true)
 
     const payload = {
-      fornecedor_id: form.fornecedor_id,
+      fornecedor_id: form.fornecedor_id || null,
       nome: form.nome.trim(),
       slug: form.slug.trim(),
       descricao: form.descricao.trim() || null,
@@ -393,10 +393,10 @@ function FormModal({ produto, fornecedores, onClose, onCreate, onUpdate, uploadI
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-neutral-700">Fornecedor *</label>
-              <select name="fornecedor_id" value={form.fornecedor_id} onChange={handleChange} required
+              <label className="mb-1 block text-sm font-medium text-neutral-700">Fornecedor</label>
+              <select name="fornecedor_id" value={form.fornecedor_id} onChange={handleChange}
                 className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand">
-                <option value="">Selecione...</option>
+                <option value="">Nenhum</option>
                 {fornecedores.filter(f => f.ativo).map(f => (
                   <option key={f.id} value={f.id}>{f.nome}</option>
                 ))}
